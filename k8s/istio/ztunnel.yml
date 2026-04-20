@@ -1,0 +1,11 @@
+apiVersion: sailoperator.io/v1
+kind: ZTunnel
+metadata:
+  name: default
+spec:
+  namespace: ztunnel
+  values:
+    ztunnel:
+      logLevel: info
+      terminationGracePeriodSeconds: 30
+  profile: ambient

@@ -1,0 +1,30 @@
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+annotations:
+  ansible.sdk.operatorframework.io/reconcile-period: 60s
+metadata:
+  name: kiali-user-workload-monitoring
+  namespace: istio-system
+spec:
+  deployment:
+    cluster_wide_access: true
+    discovery_selectors:
+      default:
+      - matchExpressions:
+        - key: istio-discovery
+          operator: In
+          values:
+          - enabled
+    logger:
+      log_level: info
+  external_services:
+    grafana:
+      enabled: true
+      internal_url: 'http://grafana.istio-system:3000'
+    prometheus:
+      auth:
+        type: bearer
+        use_kiali_token: true
+      thanos_proxy:
+        enabled: true
+      url: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091

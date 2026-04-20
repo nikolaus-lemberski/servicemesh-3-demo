@@ -1,0 +1,70 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- service-monitor.yml
+- pod-monitor.yml
+- access-logging.yml
+- clusterrolebinding.yml
+- grafana.yml
+- grafana-route.yml
+- grafana-token.yml
+- kiali.yml
+- ossm-console.yml
+
+configMapGenerator:
+- name: versions
+  literals:
+  - grafana-version=12.0.1
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: versions
+    fieldPath: data.grafana-version
+  targets:
+  - select:
+      kind: ServiceAccount
+      name: grafana
+      namespace: istio-system
+    fieldPaths:
+    - metadata.labels.[app.kubernetes.io/version]
+    options:
+      create: true
+  - select:
+      kind: ConfigMap
+      name: grafana
+      namespace: istio-system
+    fieldPaths:
+    - metadata.labels.[app.kubernetes.io/version]
+    options:
+      create: true
+  - select:
+      kind: Service
+      name: grafana
+      namespace: istio-system
+    fieldPaths:
+    - metadata.labels.[app.kubernetes.io/version]
+    options:
+      create: true
+  - select:
+      kind: Deployment
+      name: grafana
+      namespace: istio-system
+    fieldPaths:
+    - metadata.labels.[app.kubernetes.io/version]
+    - spec.template.metadata.labels.[app.kubernetes.io/version]
+    options:
+      create: true
+  - select:
+      kind: Deployment
+      name: grafana
+      namespace: istio-system
+    fieldPaths:
+    - spec.template.spec.containers.[name=grafana].image
+    options:
+      delimiter: ":"
+      index: 1

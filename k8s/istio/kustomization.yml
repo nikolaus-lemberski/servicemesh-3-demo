@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ns.yml
+- istio.yml
+- istio-cni.yml
+- ztunnel.yml
+
+configMapGenerator:
+- name: versions
+  literals:
+  - istio-version=1.27-latest
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: versions
+    fieldPath: data.istio-version
+  targets:
+  - select:
+      kind: Istio
+      name: default
+    fieldPaths:
+    - spec.version
+    options:
+      create: true
+  - select:
+      kind: IstioCNI
+      name: default
+    fieldPaths:
+    - spec.version
+    options:
+      create: true
+  - select:
+      kind: ZTunnel
+      name: default
+    fieldPaths:
+    - spec.version
+    options:
+      create: true
