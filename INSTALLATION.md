@@ -4,10 +4,10 @@
 
 First go to the Operator Hub and install the operators:
 
-* Kiali Operator
-* Red Hat OpenShift Service Mesh 3
-* Tempo Operator
-* Red Hat build of OpenTelemetry
+- Kiali Operator
+- Red Hat OpenShift Service Mesh 3
+- Tempo Operator
+- Red Hat build of OpenTelemetry
 
 ## Install Istio
 
@@ -39,7 +39,7 @@ This tells OVN-Kubernetes to route pod traffic to the outside world through the 
 Finally we install Istio, Istio-CNI and the ZTunnel for ambient mesh.
 
 ```bash
-oc apply -k k8s/install
+oc apply -k k8s/istio
 ```
 
 We can verify the installation with `oc get pods -n istio-system` (there should be one pod running), `oc get daemonset -n istio-cni` (istio-cni-nodes should be ready on all nodes) and `oc get daemonset -n ztunnel` (ztunnels on all nodes).
@@ -61,6 +61,7 @@ oc -n openshift-monitoring patch configmap cluster-monitoring-config -p '{"data"
 If not, create it:
 
 ```bash
+oc apply -f - <<EOF
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -69,6 +70,7 @@ metadata:
 data:
   config.yaml: |
     enableUserWorkload: true
+EOF
 ```
 
 Now we should have the prometheus-operator, prometheus-user-workload and thanos-ruler-user-workload running:
@@ -83,19 +85,26 @@ Finally we create Service and Pod monitors, enable access logging and install Gr
 oc apply -k k8s/observability
 ```
 
-As a last step we have to configure the Prometheus connection in Grafana. Grab the secret:
+As a last step we have to configure the Prometheus connection in Grafana. Open Grafana, you'll find the URL via
+
+```bash
+oc -n istio-system get route grafana
+```
+
+Then grab the secret:
 
 ```bash
 oc get secret grafana-token -n istio-system -o jsonpath='{.data.token}' | base64 -d
 ```
 
-Then open Grafana (you'll find the URL in the *istio-system* namespace) and go to **Connections** -> **Data sources**. Select **Prometheus** and edit the *Authentication* settings.
+Go to **Connections** -> **Data sources**. Select **Prometheus** and edit the *Authentication* settings.
 
-* Check "Skip TLS certificate validation"
-* Add an "Authorization" Header with the value "Bearer <token>"
+- Check "Skip TLS certificate validation"
+- Add an "Authorization" Header with value "Bearer TOKEN"
 
 We installed Kiali and the OpenShift Service Mesh console plugin. You will have to login to OpenShift again when the plugin is installed. The URL to Kiali you'll find with:
 
 ```bash
 echo "https://$(oc get routes -n istio-system kiali -o jsonpath='{.spec.host}')"
 ```
+

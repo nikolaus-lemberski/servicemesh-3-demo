@@ -10,7 +10,7 @@ resources:
 configMapGenerator:
 - name: versions
   literals:
-  - istio-version=1.27-latest
+  - istio-version=v1.28-latest
 
 generatorOptions:
   disableNameSuffixHash: true

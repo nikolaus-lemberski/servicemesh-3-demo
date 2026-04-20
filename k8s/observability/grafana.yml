@@ -124,7 +124,7 @@ spec:
       enableServiceLinks: true
       containers:
         - name: grafana
-          image: "docker.io/grafana/grafana:__GRAFANA_VERSION__"
+          image: "docker.io/grafana/grafana"
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
