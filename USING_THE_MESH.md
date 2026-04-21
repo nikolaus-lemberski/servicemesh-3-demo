@@ -46,5 +46,5 @@ istioctl ztunnel-config workload -n ztunnel
 If you check the Kiali Traffic Graph (Kiali console or integrated Kiali console in your OpenShift UI Console), you can see the service calls. As the Kiali traffic graph is built from real traffic, generate some with
 
 ```bash
-while true; do curl $ROUTE; sleep 5; done
+while true; do curl $ROUTE; sleep 2; done
 ```
