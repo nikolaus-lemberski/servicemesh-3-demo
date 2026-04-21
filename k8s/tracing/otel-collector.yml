@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/open-telemetry/opentelemetry-operator/main/config/crd/bases/opentelemetry.io_opentelemetrycollectors.yaml
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: istio-system
+spec:
+  observability:
+    metrics: {}
+  deploymentUpdateStrategy: {}
+  config:
+    exporters:
+      otlp:
+        endpoint: "tempo-tempostack-distributor.tempostack.svc.cluster.local:4317"
+        tls:
+          insecure: true
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+    service:
+      pipelines:
+        traces:
+          exporters:
+            - otlp
+          receivers:
+            - otlp
+          processors: []

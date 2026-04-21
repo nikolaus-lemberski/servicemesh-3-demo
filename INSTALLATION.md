@@ -88,7 +88,7 @@ oc apply -k k8s/observability
 As a last step we have to configure the Prometheus connection in Grafana. Open Grafana, you'll find the URL via
 
 ```bash
-oc -n istio-system get route grafana
+echo "https://$(oc get route -n istio-system grafana -o jsonpath='{.spec.host}')"
 ```
 
 Then grab the secret:
@@ -100,11 +100,43 @@ oc get secret grafana-token -n istio-system -o jsonpath='{.data.token}' | base64
 Go to **Connections** -> **Data sources**. Select **Prometheus** and edit the *Authentication* settings.
 
 - Check "Skip TLS certificate validation"
-- Add an "Authorization" Header with value "Bearer TOKEN"
+- Add an "Authorization" header with value "Bearer TOKEN"
 
 We installed Kiali and the OpenShift Service Mesh console plugin. You will have to login to OpenShift again when the plugin is installed. The URL to Kiali you'll find with:
 
 ```bash
-echo "https://$(oc get routes -n istio-system kiali -o jsonpath='{.spec.host}')"
+echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
 ```
 
+## Distributed Tracing
+
+Prerequisite: **ODF is installed** on OpenShift. If not, please install or use MinIO as alternative.
+
+Create a bucket claim:
+
+```bash
+oc create -f k8s/tracing/bucketclaim.yml
+```
+
+Then read the generated access keys and and export them as environment variables:
+
+```bash
+export S3_ENDPOINT="http://s3.openshift-storage.svc"
+export AWS_ACCESS_KEY_ID=$(oc get secret tempostorage -n tempostack -o jsonpath='{.data.AWS_ACCESS_KEY_ID}' | base64 --decode)
+export AWS_SECRET_ACCESS_KEY=$(oc get secret tempostorage -n tempostack -o jsonpath='{.data.AWS_SECRET_ACCESS_KEY}' | base64 --decode)
+```
+
+Now create the **TempoStack**:
+
+```bash
+envsubst < k8s/tracing/tempostack.yml | oc create -f -
+```
+
+*If you don't have envsubst, replace the values manually in tempostack.yml.*
+
+Create the OpenTelemetry collector and instruct Istio to use it.
+
+```bash
+oc apply -f k8s/tracing/otel-collector.yml
+oc apply -f k8s/tracing/istio-update.yml
+```
