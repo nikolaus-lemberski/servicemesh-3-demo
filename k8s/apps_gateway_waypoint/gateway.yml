@@ -1,0 +1,54 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: apps-gateway-istio
+  namespace: servicemesh-apps
+  labels:
+    gateway.networking.k8s.io/gateway-name: apps-gateway
+spec:
+  ports:
+    - name: status-port
+      protocol: TCP
+      appProtocol: tcp
+      port: 15021
+      targetPort: 15021
+    - name: http
+      protocol: TCP
+      appProtocol: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+  selector:
+    gateway.networking.k8s.io/gateway-name: apps-gateway
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: apps-gateway
+  namespace: servicemesh-apps
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: default
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: apps-gateway-default-route
+  namespace: servicemesh-apps
+spec:
+  parentRefs:
+  - name: apps-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: service-a
+      port: 8080
