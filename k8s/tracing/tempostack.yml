@@ -23,7 +23,7 @@ metadata:
   name: tempostack
   namespace: tempostack
 spec:
-  storageSize: 1Gi
+  storageSize: 1Gi„
   storage:
     secret:
       name: s3-bucket

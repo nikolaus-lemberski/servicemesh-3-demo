@@ -1,5 +1,12 @@
 # Using the Service Mesh
 
+We're using the Service Mesh in ambient mode (L4), sidecar mode (L7) and ambient + waypoint proxies (L7).
+
+* **Ztunnel**  
+Handles L4 (TCP) traffic management, primarily security. It provides connection-level load balancing, mTLS encryption (using HBONE), and L4 authorization. It does not read HTTP headers.
+* **Waypoint Proxy**  
+Handles L7 (HTTP/gRPC) traffic management. This is where the advanced, application-aware features are enabled.
+
 ## Install the apps
 
 Create the apps namespace, create a pod monitor (every namespace of the mesh needs a pod monitor) and the apps:
@@ -25,7 +32,7 @@ We have 3 apps in a row, app A calls app B and app B calls app C. The response o
 
 ## Onboard the apps to the Service Mesh
 
-At the moment, the apps are known to the mesh (because we have the label *istio-discovery: enabled* on the namespace), but not onboarded yet. You can verify that by checking the pods (no sidecars deployed) and the ZTunnel:
+At the moment, the apps are known to the mesh (because we have the label *istio-discovery: enabled* on the namespace), but not onboarded yet. You can verify that by checking the pods (no sidecars deployed) and the Ztunnel:
 
 ```bash
 istioctl ztunnel-config workload -n ztunnel
@@ -37,7 +44,7 @@ The apps in the *servicemesh-apps* namespace are listed, but there's no waypoint
 oc label namespace servicemesh-apps istio.io/dataplane-mode=ambient
 ```
 
-And checking the ZTunnel again, we can see that the protocol switched to **HBONE**.
+And checking the Ztunnel again, we can see that the protocol switched to **HBONE**.
 
 ```bash
 istioctl ztunnel-config workload -n ztunnel
@@ -51,7 +58,7 @@ while true; do curl $ROUTE; sleep 2; done
 
 ## Waypoint Proxy and Gateway
 
-At the moment we route traffic through a standard OpenShift Route into the mesh. We want to use a Gateway instead. And we only have Service Mesh functionality up to Level 4 in the network stack with our ZTunnel. For L7 features we have to run some waypoint proxies.
+At the moment we route traffic through a standard OpenShift Route into the mesh. We want to use a Gateway instead. And we only have Service Mesh functionality up to Level 4 in the network stack with our Ztunnel. For L7 features we have to run some waypoint proxies.
 
 ### Level 7 features (require Waypoint proxy)
 
@@ -64,22 +71,45 @@ HTTP metrics, access logging and tracing
 
 ### Ingress Gateway
 
-Create the Gateway and HTTPRoute:
+Create the Gateway and expose it via OpenShift Route. We delete our old Route as we're using the Gateway from now on.
 
 ```bash
 oc apply -f k8s/apps_gateway_waypoint/gateway.yml
-```
-
-And we expose the Gateway and delete our old Route to service-a:
-
-```bash
-oc apply -f k8s/apps_gateway_waypoint/gateway-route.yml
 oc -n servicemesh-apps delete route service-a
 ```
 
+And we create the HTTPRoute to Service A:
+
+```bash
+oc apply -f k8s/apps_gateway_waypoint/service-a-httproute.yml
+```
+
+Test the routing:
+
+```bash
+export ROUTE="https://$(oc get route -n servicemesh-apps apps-gateway -o jsonpath='{.spec.host}')"
+curl $ROUTE
+```
+
+#### Testing without Waypoint Proxy
+
+Now generate some traffic with
+
+```bash
+while true; do curl $ROUTE; sleep 3; done
+```
+
+Open Kiali
+
+```bash
+echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
+```
+
+And check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The traffic connection lines are blue, which means all traffic is going through the Ztunnel and we have Service Mesh functionality up to L4 of the network stack.
+
 ### Waypoint Proxy
 
-Create the waypoint proxy:
+For L7 functionality we create a waypoint proxy:
 
 ```bash
 oc apply -f k8s/apps_gateway_waypoint/waypoint_proxy.yml
@@ -88,20 +118,26 @@ oc apply -f k8s/apps_gateway_waypoint/waypoint_proxy.yml
 Label the namespace to enroll all services of the namespace to use the waypoint:
 
 ```bash
-oc label namespace servicemesh-apps istio.io/use-waypoint=travel-control-waypoint
+oc label namespace servicemesh-apps istio.io/use-waypoint=waypoint
 ```
 
-Istio is sending traffic from the gateway directly to the destination, if not instructed otherwise. We have to label the service to enable **ingress waypoint routing**:
+Istio is sending traffic from the gateway directly to the destination, if not instructed otherwise. We have to label the service the gateway uses to enable **ingress waypoint routing**:
 
 ```bash
-oc -n servicemesh-apps label service service-a istio.io/ingress-use-waypoint="true"
+oc -n servicemesh-apps label service service-a istio.io/ingress-use-waypoint=true
 ```
 
-Finally we have to create the waypoint routing:
+#### Testing with Waypoint Proxy
+
+Again, generate some traffic with
 
 ```bash
-oc apply -f k8s/apps_gateway_waypoint/waypoint_routing.yml
+while true; do curl $ROUTE; sleep 3; done
 ```
+
+In Kiali wait for the traffic data coming in and check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The traffic connection lines are changing to green, which means the traffic is going through the waypoint proxy and we have Service Mesh functionality up to L7 of the network stack.
+
+Also, we have consistent round robin to both versions of service-c.
 
 ### Check pods
 
@@ -111,25 +147,7 @@ A waypoint proxy and the ingress gateway are deployed next to the apps:
 oc get pod -n servicemesh-apps
 ```
 
-The route to our ingress gateway is:
-
-```bash
-echo "https://$(oc get route -n servicemesh-apps apps-gateway -o jsonpath='{.spec.host}')"
-```
-
-## Check metrics
-
-Now create some traffic and then it's a good time to check the Kiali and Distributed Tracing console.
-
-```bash
-export ROUTE="https://$(oc get route -n servicemesh-apps apps-gateway -o jsonpath='{.spec.host}')"
-while true; do curl $ROUTE; sleep 3; done
-```
-
-URL to Kiali (or just use the Kiali console in the OpenShift console UI):
-```bash
-echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
-```
+## Distributed Tracing
 
 Tempostack Distributed Tracing UI:
 ```bash

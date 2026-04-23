@@ -1,7 +1,22 @@
-kind: Service
-apiVersion: v1
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
 metadata:
-  name: apps-gateway-istio
+  name: apps-gateway
+  namespace: servicemesh-apps
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: default
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: apps-gateway
   namespace: servicemesh-apps
   labels:
     gateway.networking.k8s.io/gateway-name: apps-gateway
@@ -21,34 +36,19 @@ spec:
   selector:
     gateway.networking.k8s.io/gateway-name: apps-gateway
 ---
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
+apiVersion: route.openshift.io/v1
+kind: Route
 metadata:
   name: apps-gateway
   namespace: servicemesh-apps
 spec:
-  gatewayClassName: istio
-  listeners:
-  - name: default
-    port: 80
-    protocol: HTTP
-    allowedRoutes:
-      namespaces:
-        from: All
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: apps-gateway-default-route
-  namespace: servicemesh-apps
-spec:
-  parentRefs:
-  - name: apps-gateway
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: service-a
-      port: 8080
+  to:
+    kind: Service
+    name: apps-gateway
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
