@@ -16,13 +16,6 @@ spec:
       labels:
         app: service-c
         version: v2
-      annotations:
-        readiness.status.sidecar.istio.io/applicationPorts: ""
-        proxy.istio.io/config: |
-          tracing:
-            zipkin:
-              address: zipkin.istio-system:9411
-            sampling: 10
     spec:
       containers:
       - name: service-c

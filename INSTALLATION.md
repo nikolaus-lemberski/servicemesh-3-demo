@@ -8,6 +8,7 @@ First go to the Operator Hub and install the operators:
 - Red Hat OpenShift Service Mesh 3
 - Tempo Operator
 - Red Hat build of OpenTelemetry
+- Cluster Observability Operator
 
 ## Install Istio
 
@@ -110,11 +111,14 @@ echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
 
 ## Distributed Tracing
 
+### Tempostack
+
 Prerequisite: **ODF is installed** on OpenShift. If not, please install or use MinIO as alternative.
 
 Create a bucket claim:
 
 ```bash
+oc create -f k8s/tracing/ns.yml
 oc create -f k8s/tracing/bucketclaim.yml
 ```
 
@@ -129,14 +133,34 @@ export AWS_SECRET_ACCESS_KEY=$(oc get secret tempostorage -n tempostack -o jsonp
 Now create the **TempoStack**:
 
 ```bash
-envsubst < k8s/tracing/tempostack.yml | oc create -f -
+envsubst < k8s/tracing/tempostack.yml | oc apply -f -
 ```
 
 *If you don't have envsubst, replace the values manually in tempostack.yml.*
 
-Create the OpenTelemetry collector and instruct Istio to use it.
+Create the OpenTelemetry collector, NetworkPolicies, Telemetry resource, and update Istio with tracing configuration:
 
 ```bash
 oc apply -f k8s/tracing/otel-collector.yml
+oc apply -f k8s/tracing/networkpolicies.yml
+oc apply -f k8s/tracing/telemetry.yml
 oc apply -f k8s/tracing/istio-update.yml
 ```
+
+The OTel collector sends traces to the TempoStack gateway (port 8080) using OTLP HTTP with bearer token authentication from its ServiceAccount. The `tempostack` namespace has the `istio-discovery: enabled` label so the waypoint can discover the OTel collector service.
+
+After applying the Istio update, restart the waypoint proxy to pick up the tracing configuration:
+
+```bash
+oc rollout restart deployment/waypoint -n servicemesh-apps
+```
+
+### Distributed Tracing UI Plugin
+
+Apply the UIPlugin for the OpenShift console:
+
+```bash
+oc apply -f k8s/tracing/uiplugin.yml
+```
+
+As a console plugin is installed you'll have to login again to your OpenShift console. In "Observe" is a new entry "Traces".

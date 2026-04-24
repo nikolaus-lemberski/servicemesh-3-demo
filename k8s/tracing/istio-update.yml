@@ -12,11 +12,16 @@ spec:
     profile: ambient
     meshConfig:
       enableTracing: true
+      defaultProviders:
+        metrics:
+          - prometheus
+        tracing:
+          - otel
       extensionProviders:
       - name: otel
         opentelemetry:
           port: 4317
-          service: otel-collector.istio-system.svc.cluster.local
+          service: otel-collector.tempostack.svc.cluster.local
       discoverySelectors:
       - matchLabels:
           istio-discovery: enabled

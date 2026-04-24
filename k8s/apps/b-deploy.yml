@@ -14,13 +14,6 @@ spec:
       labels:
         app: service-b
         version: v1
-      annotations:
-        readiness.status.sidecar.istio.io/applicationPorts: ""
-        proxy.istio.io/config: |
-          tracing:
-            zipkin:
-              address: zipkin.istio-system:9411
-            sampling: 10
     spec:
       containers:
       - name: service-b

@@ -1,10 +1,3 @@
-#apiVersion: v1
-#kind: Namespace
-#metadata:
-#  name: tempostack
-#  labels:
-#    name: tempostack
-#---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -23,7 +16,12 @@ metadata:
   name: tempostack
   namespace: tempostack
 spec:
-  storageSize: 1Gi„
+  tenants:
+    mode: openshift
+    authentication:
+      - tenantName: dev
+        tenantId: "1610b0c3-c509-4592-a256-a1871353dbfa"
+  storageSize: 1Gi
   storage:
     secret:
       name: s3-bucket
@@ -36,10 +34,78 @@ spec:
         memory: 2Gi
         cpu: 2000m
   template:
+    gateway:
+      enabled: true
+      ingress:
+        type: route
     queryFrontend:
       jaegerQuery:
-        enabled: true
-        ingress:
-          route:
-            termination: edge
-          type: route
+        enabled: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-reader
+rules:
+  - apiGroups:
+      - 'tempo.grafana.com'
+    resources:
+      - dev
+    resourceNames:
+      - traces
+    verbs:
+      - 'get'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tempostack-traces-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tempostack-traces-reader
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: system:authenticated
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-writer
+rules:
+  - apiGroups:
+      - 'tempo.grafana.com'
+    resources:
+      - dev
+    resourceNames:
+      - traces
+    verbs:
+      - 'create'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tempostack-traces-writer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tempostack-traces-writer
+subjects:
+  - kind: ServiceAccount
+    name: otel-collector
+    namespace: tempostack
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: view
+  namespace: tempostack
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: tempostack

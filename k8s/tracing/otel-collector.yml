@@ -3,27 +3,42 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   name: otel
-  namespace: istio-system
+  namespace: tempostack
 spec:
   observability:
     metrics: {}
   deploymentUpdateStrategy: {}
+  volumes:
+    - name: cabundle
+      configMap:
+        name: openshift-service-ca.crt
+  volumeMounts:
+    - name: cabundle
+      mountPath: /var/run/ca
+      readOnly: true
   config:
+    extensions:
+      bearertokenauth:
+        filename: /var/run/secrets/kubernetes.io/serviceaccount/token
     exporters:
-      otlp:
-        endpoint: "tempo-tempostack-distributor.tempostack.svc.cluster.local:4317"
+      otlphttp:
+        endpoint: "https://tempo-tempostack-gateway.tempostack.svc.cluster.local:8080/api/traces/v1/dev"
+        auth:
+          authenticator: bearertokenauth
         tls:
-          insecure: true
+          ca_file: /var/run/ca/service-ca.crt
     receivers:
       otlp:
         protocols:
           grpc:
             endpoint: "0.0.0.0:4317"
     service:
+      extensions:
+        - bearertokenauth
       pipelines:
         traces:
           exporters:
-            - otlp
+            - otlphttp
           receivers:
             - otlp
           processors: []
