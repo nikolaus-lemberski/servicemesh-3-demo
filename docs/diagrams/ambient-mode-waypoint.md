@@ -29,19 +29,16 @@ graph TB
     client -->|"HTTPS"| gw
     gw -->|"HTTPRoute"| waypoint
 
-    waypoint -->|"HBONE (mTLS)"| ztunnel
-    ztunnel -->|"deliver"| podA
+    waypoint <-->|"HBONE (mTLS)"| ztunnel
+
+    ztunnel --> podA
     podA -->|"call Service B"| ztunnel
-    ztunnel -->|"HBONE (mTLS)"| waypoint
 
-    waypoint -->|"HBONE (mTLS)"| ztunnel
-    ztunnel -->|"deliver"| podB
+    ztunnel --> podB
     podB -->|"call Service C"| ztunnel
-    ztunnel -->|"HBONE (mTLS)"| waypoint
 
-    waypoint -->|"HBONE (mTLS)"| ztunnel
-    ztunnel -->|"deliver"| podC1
-    ztunnel -->|"deliver"| podC2
+    ztunnel --> podC1
+    ztunnel --> podC2
 
     istiod -.->|"xDS config"| ztunnel
     istiod -.->|"xDS config"| waypoint
