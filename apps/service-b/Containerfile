@@ -1,0 +1,25 @@
+# Build
+FROM --platform=linux/amd64 registry.access.redhat.com/ubi9/nodejs-24 as build
+
+WORKDIR /usr/src/app
+USER 1001
+
+COPY --chown=1001:1001 package*.json ./
+RUN npm ci
+COPY --chown=1001:1001 tsconfig*.json ./
+COPY --chown=1001:1001 main.ts handler.ts ./
+RUN npm run build
+
+# Run
+FROM --platform=linux/amd64 registry.access.redhat.com/ubi9/nodejs-24-minimal
+WORKDIR /usr/src/app
+USER 1001
+
+COPY --chown=1001:1001 --from=build /usr/src/app/package*.json/ .
+RUN npm ci --omit=dev
+COPY --chown=1001:1001 --from=build /usr/src/app/dist/ dist/
+
+ENV NODE_ENV=production
+EXPOSE 8080
+
+CMD ["npm", "start"]

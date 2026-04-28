@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: service-a
-        image: quay.io/nlembers/opentour/service-a:1.0
+        image: quay.io/nlembers/servicemesh3/service-a:1.0
         imagePullPolicy: IfNotPresent
         env:
         - name: PORT

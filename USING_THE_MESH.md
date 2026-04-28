@@ -115,13 +115,21 @@ For L7 functionality we create a waypoint proxy:
 oc apply -f k8s/apps_gateway_waypoint/waypoint_proxy.yml
 ```
 
+### Check pods
+
+A waypoint proxy and the ingress gateway are deployed next to the apps:
+
+```bash
+oc get pod -n servicemesh-apps
+```
+
 Label the namespace to enroll all services of the namespace to use the waypoint:
 
 ```bash
 oc label namespace servicemesh-apps istio.io/use-waypoint=waypoint
 ```
 
-As apps may be use a persistent HTTP connection for downstream service calls, restart the apps so they will use the waypoint proxy.
+As apps may use a persistent HTTP connection for downstream service calls, restart the deployments to make sure they will use the waypoint proxy.
 
 ```bash
 oc rollout restart deployment/service-a -n servicemesh-apps
@@ -145,13 +153,5 @@ while true; do curl $ROUTE; sleep 3; done
 In Kiali wait for the traffic data coming in and check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The traffic connection lines are changing to green, which means the traffic is going through the waypoint proxy and we have Service Mesh functionality up to L7 of the network stack.
 
 Also, we have consistent round robin to both versions of service-c.
-
-### Check pods
-
-A waypoint proxy and the ingress gateway are deployed next to the apps:
-
-```bash
-oc get pod -n servicemesh-apps
-```
 
 ## Distributed Tracing
