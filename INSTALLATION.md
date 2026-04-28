@@ -2,14 +2,18 @@
 
 ## Install the operators
 
-First go to the Operator Hub and install the operators:
+First go to the Operator Hub and install the operators in the OpenShift Console UI or via
 
-- Kiali Operator
-- Red Hat OpenShift Service Mesh 3
-- Tempo Operator
-- Red Hat build of OpenTelemetry
-- Cluster Observability Operator
+```bash
+oc apply -f k8s/operators
+```
 
+* Kiali Operator
+* Red Hat OpenShift Service Mesh 3
+* Tempo Operator
+* Red Hat build of OpenTelemetry
+* Cluster Observability Operator
+ 
 ## Install Istio
 
 Install the Kubernetes Gateway API if it's not available (< OpenShift 4.19):
