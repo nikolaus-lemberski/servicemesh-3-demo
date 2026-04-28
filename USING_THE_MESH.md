@@ -121,6 +121,13 @@ Label the namespace to enroll all services of the namespace to use the waypoint:
 oc label namespace servicemesh-apps istio.io/use-waypoint=waypoint
 ```
 
+As apps may be use a persistent HTTP connection for downstream service calls, restart the apps so they will use the waypoint proxy.
+
+```bash
+oc rollout restart deployment/service-a -n servicemesh-apps
+oc rollout restart deployment/service-b -n servicemesh-apps
+```
+
 Istio is sending traffic from the gateway directly to the destination, if not instructed otherwise. We have to label the service the gateway uses to enable **ingress waypoint routing**:
 
 ```bash
@@ -148,8 +155,3 @@ oc get pod -n servicemesh-apps
 ```
 
 ## Distributed Tracing
-
-Tempostack Distributed Tracing UI:
-```bash
-echo "https://$(oc get route -n tempostack tempo-tempostack-query-frontend -o jsonpath='{.spec.host}')"
-```
