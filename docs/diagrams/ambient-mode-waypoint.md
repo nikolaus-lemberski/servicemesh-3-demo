@@ -34,17 +34,20 @@ graph TB
 
     client -->|"HTTPS"| gw
     gw -->|"HTTPRoute"| waypoint
+
     waypoint -->|"HBONE (mTLS)"| ztunnel1
-    ztunnel1 --> podA
-    podA -->|"request"| ztunnel1
+    ztunnel1 -->|"deliver"| podA
+    podA -->|"call Service B"| ztunnel1
     ztunnel1 -->|"HBONE (mTLS)"| waypoint
-    waypoint -->|"L7 policy"| ztunnel1
-    ztunnel1 --> podB
-    podB -->|"request"| ztunnel1
+
+    waypoint -->|"HBONE (mTLS)"| ztunnel1
+    ztunnel1 -->|"deliver"| podB
+    podB -->|"call Service C"| ztunnel1
     ztunnel1 -->|"HBONE (mTLS)"| waypoint
-    waypoint -->|"L7 routing"| ztunnel2
-    ztunnel2 --> podC1
-    ztunnel2 --> podC2
+
+    waypoint -->|"HBONE (mTLS)"| ztunnel2
+    ztunnel2 -->|"deliver"| podC1
+    ztunnel2 -->|"deliver"| podC2
 
     istiod -.->|"xDS config"| ztunnel1
     istiod -.->|"xDS config"| ztunnel2
