@@ -18,39 +18,32 @@ graph TB
                 waypoint["waypoint<br/><i>HTTP routing, retries,<br/>circuit breaking, AuthZ,<br/>metrics, tracing</i>"]
             end
 
-            subgraph node1["Node"]
-                ztunnel1["ztunnel<br/><i>L4 · mTLS · HBONE</i>"]
-                podA["Service A<br/><i>Python</i>"]
-                podB["Service B<br/><i>TypeScript/Deno</i>"]
-            end
-
-            subgraph node2["Node"]
-                ztunnel2["ztunnel<br/><i>L4 · mTLS · HBONE</i>"]
-                podC1["Service C v1<br/><i>Java</i>"]
-                podC2["Service C v2<br/><i>Java</i>"]
-            end
+            ztunnel["ztunnel<br/><i>L4 · mTLS · HBONE</i>"]
+            podA["Service A<br/><i>Python</i>"]
+            podB["Service B<br/><i>TypeScript/Deno</i>"]
+            podC1["Service C v1<br/><i>Java</i>"]
+            podC2["Service C v2<br/><i>Java</i>"]
         end
     end
 
     client -->|"HTTPS"| gw
     gw -->|"HTTPRoute"| waypoint
 
-    waypoint -->|"HBONE (mTLS)"| ztunnel1
-    ztunnel1 -->|"deliver"| podA
-    podA -->|"call Service B"| ztunnel1
-    ztunnel1 -->|"HBONE (mTLS)"| waypoint
+    waypoint -->|"HBONE (mTLS)"| ztunnel
+    ztunnel -->|"deliver"| podA
+    podA -->|"call Service B"| ztunnel
+    ztunnel -->|"HBONE (mTLS)"| waypoint
 
-    waypoint -->|"HBONE (mTLS)"| ztunnel1
-    ztunnel1 -->|"deliver"| podB
-    podB -->|"call Service C"| ztunnel1
-    ztunnel1 -->|"HBONE (mTLS)"| waypoint
+    waypoint -->|"HBONE (mTLS)"| ztunnel
+    ztunnel -->|"deliver"| podB
+    podB -->|"call Service C"| ztunnel
+    ztunnel -->|"HBONE (mTLS)"| waypoint
 
-    waypoint -->|"HBONE (mTLS)"| ztunnel2
-    ztunnel2 -->|"deliver"| podC1
-    ztunnel2 -->|"deliver"| podC2
+    waypoint -->|"HBONE (mTLS)"| ztunnel
+    ztunnel -->|"deliver"| podC1
+    ztunnel -->|"deliver"| podC2
 
-    istiod -.->|"xDS config"| ztunnel1
-    istiod -.->|"xDS config"| ztunnel2
+    istiod -.->|"xDS config"| ztunnel
     istiod -.->|"xDS config"| waypoint
     istiod -.->|"xDS config"| gw
 
@@ -61,7 +54,7 @@ graph TB
     classDef cpStyle fill:#f0c040,stroke:#c9a030,color:#333
     classDef clientStyle fill:#95a5a6,stroke:#7f8c8d,color:#fff
 
-    class ztunnel1,ztunnel2 ztunnelStyle
+    class ztunnel ztunnelStyle
     class waypoint waypointStyle
     class podA,podB,podC1,podC2 podStyle
     class gw gwStyle
