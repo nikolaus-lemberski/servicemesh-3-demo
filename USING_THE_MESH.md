@@ -28,7 +28,7 @@ You should see something like
 Service A <- Service B <- Service C | v1 | 5vnhc | 1
 ```
 
-We have 3 apps in a row, app A calls app B and app B calls app C. The response of all downstream calls is added to the response of the first service A.
+We have 3 apps in a row, app A calls app B and app B calls app C. The response of all downstream calls is added to the response of the first service A. Service C has some additional data in the response like the version, an abbreviated host identifier and a call counter. We'll use these to explore the Service Mesh features later.
 
 ## Onboard the apps to the Service Mesh
 
@@ -291,6 +291,6 @@ while true; do curl $ROUTE; sleep 3; done
 
 In Kiali wait for the traffic data coming in and check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The traffic connection lines are changing to green, which means the traffic is going through the waypoint proxy and we have Service Mesh functionality up to L7 of the network stack.
 
-Also, we have consistent round robin to both versions of service-c.
+Also check the other observability dashboards we have already seen before. For example, the `istio_requests_total` query now has datapoints.
 
 ## Distributed Tracing

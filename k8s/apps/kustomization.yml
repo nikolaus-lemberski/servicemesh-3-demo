@@ -10,5 +10,4 @@ resources:
 - a-deploy.yml
 - b-deploy.yml
 - c-v1-deploy.yml
-- c-v2-deploy.yml
 - route.yml
