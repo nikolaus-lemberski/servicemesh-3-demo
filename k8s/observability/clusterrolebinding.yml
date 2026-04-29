@@ -10,6 +10,3 @@ subjects:
 - kind: ServiceAccount
   name: kiali-service-account
   namespace: istio-system
-- kind: ServiceAccount
-  name: grafana
-  namespace: istio-system  

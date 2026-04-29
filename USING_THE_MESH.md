@@ -56,6 +56,47 @@ If you check the Kiali Traffic Graph (Kiali console or integrated Kiali console 
 while true; do curl $ROUTE; sleep 2; done
 ```
 
+### Check Observability
+
+Now it's time to check out the observability stack.
+
+**Kiali**
+In the OpenShift console UI, open 
+
+```text
+Service Mesh -> Traffic Graph 
+```
+
+Select the servicemesh-apps namespace. You see a graph of the traffic that flows through our services. The blue lines mean all traffic is going through our L4 Ztunnel. If you activate *Security* in the *Display* menu and click on the new icons on the blue lines you see we have mTLS enabled.
+
+**Metrics**
+
+In the OpenShift console UI, open 
+
+```text
+Observe -> Metrics
+```
+
+Enter the query `istio_tcp_connections_opened_total` and you can see that with the Thanos Querier we can access Istio metrics. At the moment we only have L4 metrics. Later we'll use a Waypoint proxy for L7 which exposes HTTP metrics like `istio_requests_total`.
+
+**Perses Dashboard**
+
+In the OpenShift console UI, open 
+
+```text
+Observe -> Perses Dashboards
+```
+
+And you can see the TCP traffic.
+
+Also, if you go into 
+
+```text
+Workloads -> Deployments
+```
+
+and open for example the service-b deployment, you will have a Service Mesh tab with inbound traffic, Kiali information etc..
+
 ## Waypoint Proxy and Gateway
 
 At the moment we route traffic through a standard OpenShift Route into the mesh. We want to use a Gateway instead. And we only have Service Mesh functionality up to Level 4 in the network stack with our Ztunnel. For L7 features we have to run some waypoint proxies.

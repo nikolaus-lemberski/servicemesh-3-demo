@@ -40,10 +40,11 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
 fi
 
 # ----------------------------------------------------------------------------
-# Step 1: Distributed Tracing UI Plugin
+# Step 1: UI Plugins (Distributed Tracing + Perses Monitoring)
 # ----------------------------------------------------------------------------
-info "Step 1: Removing Distributed Tracing UI Plugin ..."
+info "Step 1: Removing UI Plugins ..."
 safe_delete uiplugin distributed-tracing
+safe_delete uiplugin monitoring
 
 # ----------------------------------------------------------------------------
 # Step 2: Tracing resources
@@ -108,6 +109,7 @@ ok "Operator subscriptions and CSVs removed"
 # Step 6: Namespaces
 # ----------------------------------------------------------------------------
 info "Step 6: Removing namespaces ..."
+safe_delete_ns perses-dev
 safe_delete_ns tempostack
 safe_delete_ns istio-system
 safe_delete_ns istio-cni

@@ -6,56 +6,14 @@ resources:
 - pod-monitor.yml
 - access-logging.yml
 - clusterrolebinding.yml
-- grafana.yml
-- grafana-route.yml
-- grafana-token.yml
+- perses-namespace.yml
+- perses-uiplugin.yml
+- perses-datasource.yml
+- perses-dashboards/istio-control-plane.yaml
+- perses-dashboards/istio-mesh.yaml
+- perses-dashboards/istio-performance.yaml
+- perses-dashboards/istio-workload-dashboard.yaml
+- perses-dashboards/istio-service-dashboard.yaml
+- perses-dashboards/istio-ztunnel-dashboard.yaml
 - kiali.yml
 - ossm-console.yml
-
-images:
-- name: docker.io/grafana/grafana
-  newTag: "13.0.1"
-
-replacements:
-- source:
-    kind: Deployment
-    name: grafana
-    namespace: istio-system
-    fieldPath: spec.template.spec.containers.[name=grafana].image
-    options:
-      delimiter: ":"
-      index: 1
-  targets:
-  - select:
-      kind: ServiceAccount
-      name: grafana
-      namespace: istio-system
-    fieldPaths:
-    - metadata.labels.[app.kubernetes.io/version]
-    options:
-      create: true
-  - select:
-      kind: ConfigMap
-      name: grafana
-      namespace: istio-system
-    fieldPaths:
-    - metadata.labels.[app.kubernetes.io/version]
-    options:
-      create: true
-  - select:
-      kind: Service
-      name: grafana
-      namespace: istio-system
-    fieldPaths:
-    - metadata.labels.[app.kubernetes.io/version]
-    options:
-      create: true
-  - select:
-      kind: Deployment
-      name: grafana
-      namespace: istio-system
-    fieldPaths:
-    - metadata.labels.[app.kubernetes.io/version]
-    - spec.template.metadata.labels.[app.kubernetes.io/version]
-    options:
-      create: true

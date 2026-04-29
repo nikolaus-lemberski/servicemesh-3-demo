@@ -155,9 +155,9 @@ info "Waiting for user workload monitoring pods ..."
 wait_for_pods openshift-user-workload-monitoring 300
 
 # ----------------------------------------------------------------------------
-# Step 6: Observability - Monitors, Grafana, Kiali, OSSMConsole
+# Step 6: Observability - Monitors, Perses, Kiali, OSSMConsole
 # ----------------------------------------------------------------------------
-info "Step 6: Installing observability stack (monitors, Grafana, Kiali, OSSMConsole) ..."
+info "Step 6: Installing observability stack (monitors, Perses, Kiali, OSSMConsole) ..."
 oc apply -k "${SCRIPT_DIR}/k8s/observability"
 wait_for_pods istio-system 300
 ok "Observability stack installed"
@@ -224,11 +224,7 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN} Installation complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-info "Grafana URL:"
-echo "  https://$(oc get route -n istio-system grafana -o jsonpath='{.spec.host}' 2>/dev/null || echo '<not yet available>')"
-echo ""
-info "Grafana bearer token (for Prometheus data source):"
-echo "  $(oc get secret grafana-token -n istio-system -o jsonpath='{.data.token}' 2>/dev/null | base64 -d || echo '<not yet available>')"
+info "Perses dashboards available at: Observe > Dashboards (Perses) in the OpenShift console"
 echo ""
 info "Kiali URL:"
 echo "  https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}' 2>/dev/null || echo '<not yet available>')"

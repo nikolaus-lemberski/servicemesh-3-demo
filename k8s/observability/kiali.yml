@@ -18,11 +18,38 @@ spec:
     logger:
       log_level: info
   external_services:
-    grafana:
+    perses:
       enabled: true
-      internal_url: 'http://grafana.istio-system:3000'
+      url_format: openshift
+      project: perses-dev
+      is_core: false
+      auth:
+        type: none
+      dashboards:
+      - name: Istio Mesh Dashboard
+        variables:
+          namespace: var-namespace
+          workload: var-workload
+          datasource: var-datasource
+      - name: Istio Service Dashboard
+        variables:
+          datasource: var-datasource
+          namespace: var-namespace
+          service: var-service
+          version: var-version
+      - name: Istio Workload Dashboard
+        variables:
+          datasource: var-datasource
+          namespace: var-namespace
+          version: var-version
+          workload: var-workload
+      - name: Istio Ztunnel Dashboard
+        variables:
+          namespace: var-namespace
+          workload: var-workload
     prometheus:
       auth:
+        ca_file: /kiali-cabundle/service-ca.crt
         type: bearer
         use_kiali_token: true
       thanos_proxy:
