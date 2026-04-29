@@ -97,6 +97,104 @@ Workloads -> Deployments
 
 and open for example the service-b deployment, you will have a Service Mesh tab with inbound traffic, Kiali information etc..
 
+## L4 Security Features (Ztunnel)
+
+Before we move to L7 with waypoint proxies, let's demonstrate what the ztunnel can already do at L4: enforce strict mTLS and identity-based authorization.
+
+### Strict mTLS
+
+By default, Istio ambient mode uses *permissive* mTLS — mesh workloads accept both plain-text and mTLS traffic. We can enforce that **only** mTLS traffic is allowed by applying a `PeerAuthentication` policy.
+
+Start a temporary curl pod in the `default` namespace (which is NOT enrolled in the mesh) and one in `servicemesh-apps` (which IS in the mesh):
+
+```bash
+oc run curl-test -n default --image=curlimages/curl --restart=Never -- sleep 3600
+oc run curl-test -n servicemesh-apps --image=curlimages/curl --restart=Never -- sleep 3600
+```
+
+Wait a few seconds for the pods to be running, then verify:
+
+```bash
+oc get pod curl-test -n default -o jsonpath='{.status.phase}'
+oc get pod curl-test -n servicemesh-apps -o jsonpath='{.status.phase}'
+```
+
+**Test from outside the mesh (permissive):** The pod in `default` sends plain-text HTTP. In permissive mode (the default) this is **accepted**:
+
+```bash
+oc exec curl-test -n default -- curl -s -m 5 -w "\n" http://service-c.servicemesh-apps:8080/health
+```
+
+Apply the strict mTLS policy:
+
+```bash
+oc apply -f k8s/istiofeatures/mtls/peer-authentication.yml
+```
+
+**Test from outside the mesh (strict):** The same curl pod in `default` still sends plain-text HTTP, so it should now be **rejected**:
+
+```bash
+oc exec curl-test -n default -- curl -s -m 5 -w "\n" http://service-c.servicemesh-apps:8080/health
+```
+
+The connection will be reset because the ztunnel enforces mTLS and rejects plain-text traffic.
+
+**Test from inside the mesh:** Now run the same curl from the pod in `servicemesh-apps`. The ztunnel transparently adds mTLS, so the request **succeeds**:
+
+```bash
+oc exec curl-test -n servicemesh-apps -- curl -s -m 5 -w "\n" http://service-c.servicemesh-apps:8080/health
+```
+
+You should get a healthy response. This shows that ztunnel provides zero-config mTLS for all enrolled workloads.
+
+Clean up the strict mTLS policy and the curl pod in `default`:
+
+```bash
+oc delete -f k8s/istiofeatures/mtls/peer-authentication.yml
+oc delete pod curl-test -n default
+```
+
+### L4 Authorization Policy
+
+The ztunnel can also enforce authorization at L4 based on **SPIFFE identity** (service account). Our deployments use dedicated service accounts (`service-a`, `service-b`, `service-c`), so the ztunnel can distinguish between callers.
+
+We'll apply a policy that only allows `service-b` to reach `service-c`. Any other caller will be denied.
+
+Apply the authorization policy:
+
+```bash
+oc apply -f k8s/istiofeatures/l4-authz/authorization-policy.yml
+```
+
+**Test the call chain:** The normal A -> B -> C call should still work because service-b is the one calling service-c:
+
+```bash
+curl $ROUTE
+```
+
+You should still see the full chain response.
+
+**Test from a curl pod:** The curl pod we created earlier in `servicemesh-apps` uses the `default` service account, not `service-b`. The ztunnel will **deny** the request:
+
+```bash
+oc exec curl-test -n servicemesh-apps -- curl -s -m 5 -w "\n" http://service-c.servicemesh-apps:8080/health
+```
+
+The connection will be denied by the ztunnel (RBAC: access denied). Only service-b's identity is allowed to reach service-c.
+
+You can also verify in the ztunnel logs that the connection was denied:
+
+```bash
+oc logs -n ztunnel -l app=ztunnel --tail=50 | grep "policy rejection"
+```
+
+Clean up the authorization policy and the curl pod:
+
+```bash
+oc delete -f k8s/istiofeatures/l4-authz/authorization-policy.yml
+oc delete pod curl-test -n servicemesh-apps
+```
+
 ## Waypoint Proxy and Gateway
 
 At the moment we route traffic through a standard OpenShift Route into the mesh. We want to use a Gateway instead. And we only have Service Mesh functionality up to Level 4 in the network stack with our Ztunnel. For L7 features we have to run some waypoint proxies.

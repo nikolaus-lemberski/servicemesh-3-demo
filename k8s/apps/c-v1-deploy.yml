@@ -17,6 +17,7 @@ spec:
         app: service-c
         version: v1
     spec:
+      serviceAccountName: service-c
       containers:
       - name: service-c
         image: quay.io/nlembers/servicemesh3/service-c:1.0

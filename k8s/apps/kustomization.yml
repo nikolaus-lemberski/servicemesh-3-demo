@@ -6,6 +6,7 @@ namespace: servicemesh-apps
 resources:
 - ns.yml
 - pod-monitors.yml
+- service-accounts.yml
 - a-deploy.yml
 - b-deploy.yml
 - c-v1-deploy.yml

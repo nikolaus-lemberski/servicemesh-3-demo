@@ -15,6 +15,7 @@ spec:
         app: service-a
         version: v1
     spec:
+      serviceAccountName: service-a
       containers:
       - name: service-a
         image: quay.io/nlembers/servicemesh3/service-a:1.0
