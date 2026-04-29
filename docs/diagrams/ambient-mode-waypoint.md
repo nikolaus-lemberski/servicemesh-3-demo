@@ -20,7 +20,7 @@ graph TB
 
             ztunnel["ztunnel<br/><i>L4 · mTLS · HBONE</i>"]
             podA["Service A<br/><i>Python</i>"]
-            podB["Service B<br/><i>TypeScript/Deno</i>"]
+            podB["Service B<br/><i>TypeScript/Express</i>"]
             podC1["Service C v1<br/><i>Java</i>"]
             podC2["Service C v2<br/><i>Java</i>"]
         end
