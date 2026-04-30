@@ -625,7 +625,7 @@ curl http://localhost:8080/
 kill %1
 ```
 
-The counter should be at 1 (this first call). Now generate traffic through the normal route:
+Note the call counter. Now generate traffic through the normal route:
 
 ```bash
 for i in $(seq 1 10); do curl $ROUTE; sleep 1; done
