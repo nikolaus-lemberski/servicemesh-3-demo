@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-c-v1
+  namespace: servicemesh-apps
+  labels:
+    app: service-c
+    version: v1
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: service-c
+    version: v1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-c-v2
+  namespace: servicemesh-apps
+  labels:
+    app: service-c
+    version: v2
+spec:
+  ports:
+  - name: http
+    port: 8080
+  selector:
+    app: service-c
+    version: v2

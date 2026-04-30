@@ -2,9 +2,9 @@
 
 We're using the Service Mesh in ambient mode (L4), sidecar mode (L7) and ambient + waypoint proxies (L7).
 
-* **Ztunnel**  
+- **Ztunnel**  
 Handles L4 (TCP) traffic management, primarily security. It provides connection-level load balancing, mTLS encryption (using HBONE), and L4 authorization. It does not read HTTP headers.
-* **Waypoint Proxy**  
+- **Waypoint Proxy**  
 Handles L7 (HTTP/gRPC) traffic management. This is where the advanced, application-aware features are enabled.
 
 ## Install the apps
@@ -201,11 +201,11 @@ At the moment we route traffic through a standard OpenShift Route into the mesh.
 
 ### Level 7 features (require Waypoint proxy)
 
-* **Traffic management**  
+- **Traffic management**  
 Advanced HTTP routing, load balancing, circuit breaking, rate limiting, fault injection, retries, timeouts
-* **Security**  
+- **Security**  
 Authorization policies based on L7 attributes such as request type or HTTP headers
-* **Observability**  
+- **Observability**  
 HTTP metrics, access logging and tracing
 
 ### Ingress Gateway
@@ -294,3 +294,119 @@ In Kiali wait for the traffic data coming in and check the *Traffic Graph* for t
 Also check the other observability dashboards we have already seen before. For example, the `istio_requests_total` query now has datapoints.
 
 ## Distributed Tracing
+
+Distributed Tracing operates by adding trace and span IDs to the HTTP header. So with L4 ambient mesh we do not get tracing data from the Service Mesh - but as we have a Waypoint proxy now, distributed tracing functionality is added. The Service Mesh adds tracing headers automatically on incoming requests if there aren't any. To make tracing of the full path visible, apps have to foward the tracing headers when doing downstream service calls, see the [Istio docs](https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/#building-applications-to-support-trace-context-propagation).
+
+As our apps do that and our observability stack (Tempo with Distributed Tracing UI Plugin, OpenTelemetry) is set up and Istio configured to use it, we can explore the Distributed Tracing Dashboard in the OpenShift Console UI:
+
+```text
+Observe -> Traces -> Tempo instance "tempostack" -> Tenant "dev"
+```
+
+## Canary Release
+
+A canary release lets you roll out a new version of a service gradually, shifting traffic in controlled increments so you can observe behaviour before committing fully. We'll use the waypoint proxy and Gateway API `HTTPRoute` to steer traffic between service-c v1 and v2.
+
+### Preparation — version-specific Services
+
+The existing `service-c` Service selects **all** pods with `app: service-c` regardless of version. To split traffic we need two additional Services that each select a single version:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/0-service-c-versions.yml
+```
+
+This creates `service-c-v1` (selects `version: v1`) and `service-c-v2` (selects `version: v2`).
+
+### Step 1 — Pin all traffic to v1
+
+Before deploying the new version, pin traffic explicitly to v1. This creates an `HTTPRoute` attached to the `service-c` Service (processed by the waypoint proxy) that sends 100 % of requests to `service-c-v1`:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/1-httproute-v1.yml
+```
+
+Verify that everything still works:
+
+```bash
+curl $ROUTE
+```
+
+You should see `v1` in the response:
+
+```text
+Service A <- Service B <- Service C | v1 | 5vnhc | 42
+```
+
+### Step 2 — Deploy service-c v2
+
+Now deploy the v2 version alongside v1:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/c-v2-deploy.yml
+```
+
+Wait for the pod to be ready:
+
+```bash
+oc rollout status deployment/service-c-v2 -n servicemesh-apps
+```
+
+Even though v2 is running, the HTTPRoute still sends 100 % of traffic to v1. Confirm by generating some requests:
+
+```bash
+for i in $(seq 1 10); do curl $ROUTE; done
+```
+
+Every response should show `v1`.
+
+### Step 3 — Shift 10 % of traffic to v2
+
+Start small — send 10 % of requests to v2 while keeping 90 % on v1:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/2-httproute-90-10.yml
+```
+
+Generate traffic and observe the version in the responses:
+
+```bash
+while true; do curl $ROUTE; sleep 2; done
+```
+
+Roughly 1 in 10 requests should now show `v2`. Check Kiali for a visual split:
+
+```text
+Service Mesh -> Traffic Graph -> Display -> Check "Traffic Distribution"
+```
+
+### Step 4 — Shift 50 % of traffic to v2
+
+If v2 looks healthy, increase the canary to 50/50:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/3-httproute-50-50.yml
+```
+
+You should see an even mix of `v1` and `v2` responses.
+
+### Step 5 — Complete the rollout to v2
+
+Once you're confident, send 100 % of traffic to v2:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/4-httproute-v2.yml
+```
+
+All responses should now show `v2`.
+
+### Cleanup
+
+Remove the canary HTTPRoute and the version-specific Services. Scale down or delete the v1 deployment if no longer needed:
+
+```bash
+oc delete -f k8s/istiofeatures/canary/4-httproute-v2.yml
+oc delete -f k8s/istiofeatures/canary/0-service-c-versions.yml
+oc delete -f k8s/istiofeatures/canary/c-v2-deploy.yml
+```
+
+Traffic will return to normal round-robin across whichever service-c pods are running behind the original `service-c` Service.
