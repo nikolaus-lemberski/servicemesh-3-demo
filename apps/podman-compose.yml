@@ -1,7 +1,7 @@
 version: "3"
 services:
   service-a:
-    build: ./apps/service-a
+    build: ./service-a
     container_name: service-a
     image: service-a:latest
     ports:
@@ -12,7 +12,7 @@ services:
       PORT: 8080
       SERVICE_B_HOST: service-b:8080
   service-b:
-    build: ./apps/service-b
+    build: ./service-b
     container_name: service-b
     image: service-b:latest
     ports:
@@ -23,7 +23,7 @@ services:
       PORT: 8080
       SERVICE_C_HOST: service-c:8080
   service-c:
-    build: ./apps/service-c
+    build: ./service-c
     container_name: service-c
     image: service-c:latest
     ports:

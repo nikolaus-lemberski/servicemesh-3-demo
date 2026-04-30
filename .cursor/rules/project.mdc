@@ -17,7 +17,7 @@ Three microservices in a call chain: A -> B -> C. Deployed in namespace `service
 |---------|-------------------|-----------|
 | service-a | Python 3 | ASGI + uvicorn |
 | service-b | TypeScript | Node.js + Express |
-| service-c | Java 21 | Quarkus |
+| service-c | Java 25 | Quarkus |
 
 service-c has two versions (v1, v2) and crash/repair endpoints for resilience demos.
 
@@ -31,19 +31,28 @@ service-c has two versions (v1, v2) and crash/repair endpoints for resilience de
 ## Observability Stack
 
 - Prometheus (OpenShift user workload monitoring) with ServiceMonitor/PodMonitor
-- Grafana (in istio-system)
-- Kiali + OpenShift Service Mesh console plugin
+- Perses dashboards (via Cluster Observability Operator UIPlugin)
+- Kiali + OpenShift Service Mesh (OSSM) console plugin
 - Tempo (TempoStack with ODF S3) + OpenTelemetry Collector for distributed tracing
 
-## Key K8s Directories
+## Key Directories
 
+- `apps/` — microservice source code (service-a, service-b, service-c) with Containerfiles
+- `scripts/` — `install.sh` and `cleanup.sh` helper scripts
 - `k8s/istio/` — Istio, IstioCNI, ztunnel CRs (kustomize)
-- `k8s/apps/` — app deployments, services, namespace, route (kustomize)
+- `k8s/apps/` — app deployments, service accounts, pod monitors, namespace, route (kustomize)
 - `k8s/apps_gateway_waypoint/` — Gateway, HTTPRoute, waypoint proxy
-- `k8s/observability/` — Kiali, Grafana, monitors, access logging (kustomize)
-- `k8s/tracing/` — TempoStack, OTel collector, telemetry, network policies
+- `k8s/observability/` — Kiali, OSSM console plugin, Perses dashboards/datasource, monitors, access logging (kustomize)
+- `k8s/tracing/` — TempoStack, OTel collector, telemetry, network policies, tracing UI plugin
 - `k8s/operators/` — operator subscriptions
-- `k8s/istiofeatures/` — canary, circuit-breaker, mirroring, mTLS demos
+- `k8s/istiofeatures/` — canary, circuit-breaker, l4-authz, mirroring, mTLS demos
+
+## Key Files
+
+- `apps/podman-compose.yml` — local dev compose (all three services)
+- `apps/tag-and-push.sh` — container image build and push helper
+- `INSTALLATION.md` — full installation guide (operators, Istio, observability, tracing)
+- `USING_THE_MESH.md` — workshop walkthrough (onboarding, L4 security, waypoint, canary, circuit breaker, mirroring)
 
 ## Conventions
 
@@ -54,4 +63,4 @@ service-c has two versions (v1, v2) and crash/repair endpoints for resilience de
 - Label `istio.io/dataplane-mode=ambient` to onboard namespaces
 - Label `istio.io/use-waypoint=waypoint` for waypoint enrollment
 - Container images built with `podman build` using Containerfiles
-- Local dev via `podman-compose up --build`
+- Local dev via `podman-compose up --build` (from `apps/` directory)
