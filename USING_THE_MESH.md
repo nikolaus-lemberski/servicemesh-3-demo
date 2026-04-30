@@ -120,6 +120,7 @@ while true; do curl $ROUTE; sleep 2; done
 Now it's time to check out the observability stack.
 
 **Kiali**
+
 In the OpenShift console UI, open 
 
 ```text
