@@ -516,3 +516,75 @@ oc delete -f k8s/istiofeatures/circuit-breaker/1-destination-rule.yml
 oc scale deployment/service-c-v1 -n servicemesh-apps --replicas=1
 ```
 
+## Traffic Mirroring
+
+Traffic mirroring (also called shadowing) sends a copy of live traffic to a second service without affecting the primary request path. The mirrored requests are fire-and-forget — responses from the mirror target are discarded. This is useful for testing a new version with real production traffic before routing actual users to it.
+
+We'll mirror 100 % of the traffic that goes to service-c-v1 to a freshly deployed service-c-v2.
+
+### Preparation — Deploy v2 and version-specific Services
+
+We need the version-specific Services (`service-c-v1`, `service-c-v2`) and the v2 Deployment. These are the same resources we used in the canary demo:
+
+```bash
+oc apply -f k8s/istiofeatures/canary/0-service-c-versions.yml
+oc apply -f k8s/istiofeatures/canary/c-v2-deploy.yml
+```
+
+Wait for v2 to be ready:
+
+```bash
+oc rollout status deployment/service-c-v2 -n servicemesh-apps
+```
+
+### Step 1 — Apply the mirror HTTPRoute
+
+The `HTTPRoute` attaches to the `service-c` Service (processed by the waypoint proxy), routes all traffic to `service-c-v1`, and mirrors a copy to `service-c-v2`:
+
+```bash
+oc apply -f k8s/istiofeatures/mirroring/1-mirror-httproute.yml
+```
+
+### Step 2 — Generate traffic and verify
+
+First, check the v2 call counter before sending any traffic:
+
+```bash
+export V2_POD=$(oc get pods -n servicemesh-apps -l app=service-c,version=v2 -o jsonpath='{.items[0].metadata.name}')
+oc port-forward -n servicemesh-apps $V2_POD 8889:8080 &
+curl http://localhost:8889/
+kill %1
+```
+
+The counter should be at 1 (this first call). Now generate traffic through the normal route:
+
+```bash
+for i in $(seq 1 10); do curl $ROUTE; sleep 1; done
+```
+
+All responses come from **v1** only — the user never sees v2 responses because mirrored traffic is fire-and-forget.
+
+Now check the v2 call counter again:
+
+```bash
+oc port-forward -n servicemesh-apps $V2_POD 8889:8080 &
+curl http://localhost:8889/
+kill %1
+```
+
+The counter should have jumped to 11 (1 from our initial check + 10 mirrored requests) — proving v2 received copies of the live traffic even though no user-facing response ever came from v2.
+
+In Kiali, you can observe the mirrored traffic flow as well:
+
+```text
+Service Mesh -> Traffic Graph -> Display -> Check "Traffic Distribution"
+```
+
+### Cleanup
+
+```bash
+oc delete -f k8s/istiofeatures/mirroring/1-mirror-httproute.yml
+oc delete -f k8s/istiofeatures/canary/c-v2-deploy.yml
+oc delete -f k8s/istiofeatures/canary/0-service-c-versions.yml
+```
+
