@@ -637,6 +637,9 @@ Now check the v2 call counter again:
 
 ```bash
 oc port-forward -n servicemesh-apps $V2_POD 8080:8080 &
+```
+
+```bash
 curl http://localhost:8080/
 kill %1
 ```
