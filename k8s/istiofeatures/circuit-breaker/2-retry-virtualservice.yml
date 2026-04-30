@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: service-c-retry
+  namespace: servicemesh-apps
+spec:
+  hosts:
+  - service-c
+  http:
+  - route:
+    - destination:
+        host: service-c
+        port:
+          number: 8080
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx
