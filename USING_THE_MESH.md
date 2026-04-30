@@ -558,11 +558,11 @@ Explorer the Kiali Traffic Graph to see the Circuit Breaker and Retry applied an
 Repair the crashed pod:
 
 ```bash
-oc port-forward -n servicemesh-apps $CRASH_POD 8888:8080 &
+oc port-forward -n servicemesh-apps $CRASH_POD 8080:8080 &
 ```
 
 ```bash
-curl http://localhost:8888/repair
+curl http://localhost:8080/repair
 kill %1
 ```
 
@@ -617,8 +617,11 @@ First, check the v2 call counter before sending any traffic:
 
 ```bash
 export V2_POD=$(oc get pods -n servicemesh-apps -l app=service-c,version=v2 -o jsonpath='{.items[0].metadata.name}')
-oc port-forward -n servicemesh-apps $V2_POD 8889:8080 &
-curl http://localhost:8889/
+oc port-forward -n servicemesh-apps $V2_POD 8080:8080 &
+```
+
+```bash
+curl http://localhost:8080/
 kill %1
 ```
 
@@ -633,8 +636,8 @@ All responses come from **v1** only — the user never sees v2 responses because
 Now check the v2 call counter again:
 
 ```bash
-oc port-forward -n servicemesh-apps $V2_POD 8889:8080 &
-curl http://localhost:8889/
+oc port-forward -n servicemesh-apps $V2_POD 8080:8080 &
+curl http://localhost:8080/
 kill %1
 ```
 
