@@ -5,7 +5,7 @@
 First go to the Operator Hub and install the operators in the OpenShift Console UI or via
 
 ```bash
-oc apply -f k8s/operators
+oc apply -f k8s/operators/subscriptions.yml
 ```
 
 * Kiali Operator
@@ -84,30 +84,15 @@ Now we should have the prometheus-operator, prometheus-user-workload and thanos-
 oc get pods -n openshift-user-workload-monitoring
 ```
 
-Finally we create Service and Pod monitors, enable access logging and install Grafana.
+Finally we create Service and Pod monitors, enable access logging and install Perses dashboards, Kiali, and the OpenShift Service Mesh console plugin.
 
 ```bash
 oc apply -k k8s/observability
 ```
 
-As a last step we have to configure the Prometheus connection in Grafana. Open Grafana, you'll find the URL via
+Perses dashboards are available in the OpenShift console under **Observe > Dashboards (Perses)**.
 
-```bash
-echo "https://$(oc get route -n istio-system grafana -o jsonpath='{.spec.host}')"
-```
-
-Then grab the secret:
-
-```bash
-oc get secret grafana-token -n istio-system -o jsonpath='{.data.token}' | base64 -d
-```
-
-Go to **Connections** -> **Data sources**. Select **Prometheus** and edit the *Authentication* settings.
-
-- Check "Skip TLS certificate validation"
-- Add an "Authorization" header with value "Bearer TOKEN"
-
-We installed Kiali and the OpenShift Service Mesh console plugin. You will have to login to OpenShift again when the plugin is installed. The URL to Kiali you'll find with:
+You will have to login to OpenShift again when the console plugin is installed. The URL to Kiali you'll find with:
 
 ```bash
 echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
@@ -122,8 +107,8 @@ Prerequisite: **ODF is installed** on OpenShift. If not, please install or use M
 Create a bucket claim:
 
 ```bash
-oc create -f k8s/tracing/ns.yml
-oc create -f k8s/tracing/bucketclaim.yml
+oc apply -f k8s/tracing/ns.yml
+oc apply -f k8s/tracing/bucketclaim.yml
 ```
 
 Then read the generated access keys and and export them as environment variables:
@@ -152,12 +137,6 @@ oc apply -f k8s/tracing/istio-update.yml
 ```
 
 The OTel collector sends traces to the TempoStack gateway (port 8080) using OTLP HTTP with bearer token authentication from its ServiceAccount. The `tempostack` namespace has the `istio-discovery: enabled` label so the waypoint can discover the OTel collector service.
-
-After applying the Istio update, restart the waypoint proxy to pick up the tracing configuration:
-
-```bash
-oc rollout restart deployment/waypoint -n servicemesh-apps
-```
 
 ### Distributed Tracing UI Plugin
 

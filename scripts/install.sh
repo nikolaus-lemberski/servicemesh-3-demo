@@ -201,20 +201,9 @@ oc apply -f "${SCRIPT_DIR}/k8s/tracing/istio-update.yml"
 ok "Tracing resources applied"
 
 # ----------------------------------------------------------------------------
-# Step 8: Restart waypoint proxy (if it exists)
+# Step 8: Distributed Tracing UI Plugin
 # ----------------------------------------------------------------------------
-if oc get deployment waypoint -n servicemesh-apps &>/dev/null; then
-  info "Step 8: Restarting waypoint proxy ..."
-  oc rollout restart deployment/waypoint -n servicemesh-apps
-  ok "Waypoint proxy restarted"
-else
-  info "Step 8: No waypoint proxy found in servicemesh-apps (skipped)"
-fi
-
-# ----------------------------------------------------------------------------
-# Step 9: Distributed Tracing UI Plugin
-# ----------------------------------------------------------------------------
-info "Step 9: Installing Distributed Tracing UI Plugin ..."
+info "Step 8: Installing Distributed Tracing UI Plugin ..."
 oc apply -f "${SCRIPT_DIR}/k8s/tracing/uiplugin.yml"
 ok "UI Plugin installed"
 
