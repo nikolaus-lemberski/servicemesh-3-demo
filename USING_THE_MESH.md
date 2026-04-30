@@ -644,7 +644,7 @@ curl http://localhost:8080/
 kill %1
 ```
 
-The counter should have jumped to 11 (1 from our initial check + 10 mirrored requests) — proving v2 received copies of the live traffic even though no user-facing response ever came from v2.
+The counter should have jumped up by 10 — proving v2 received copies of the live traffic even though no user-facing response ever came from v2.
 
 In Kiali, you can observe the mirrored traffic flow as well:
 
