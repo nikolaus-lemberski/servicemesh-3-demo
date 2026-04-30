@@ -504,6 +504,9 @@ Pick one of the service-c pods and crash it via port-forwarding:
 ```bash
 export CRASH_POD=$(oc get pods -n servicemesh-apps -l app=service-c,version=v1 -o jsonpath='{.items[0].metadata.name}')
 oc port-forward -n servicemesh-apps $CRASH_POD 8080:8080 &
+```
+
+```bash
 curl http://localhost:8080/crash
 kill %1
 ```
@@ -556,6 +559,9 @@ Repair the crashed pod:
 
 ```bash
 oc port-forward -n servicemesh-apps $CRASH_POD 8888:8080 &
+```
+
+```bash
 curl http://localhost:8888/repair
 kill %1
 ```
