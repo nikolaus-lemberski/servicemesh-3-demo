@@ -588,3 +588,24 @@ oc delete -f k8s/istiofeatures/canary/c-v2-deploy.yml
 oc delete -f k8s/istiofeatures/canary/0-service-c-versions.yml
 ```
 
+---
+
+## Congratulations, you're done!
+
+You have successfully explored Istio Service Mesh on OpenShift in ambient mode — from L4 security with the ztunnel all the way to L7 traffic management with waypoint proxies.
+
+> **Why do we mix Gateway API and Istio APIs?**
+>
+> You may have noticed that we used Gateway API `HTTPRoute` for canary releases and traffic mirroring, but Istio `DestinationRule` and `VirtualService` for the circuit breaker and retries. If you're familiar with sidecar-based Istio, you'd expect `VirtualService` + `DestinationRule` for everything.
+>
+> In ambient mode, **Gateway API is the recommended API for traffic routing** and replaces `VirtualService` wherever it can:
+>
+> | Feature | API | Why |
+> |---|---|---|
+> | Weighted routing (canary) | `HTTPRoute` | Core Gateway API — `backendRefs` with `weight` |
+> | Traffic mirroring | `HTTPRoute` | Core Gateway API — `RequestMirror` filter |
+> | Circuit breaking / outlier detection | `DestinationRule` | No Gateway API equivalent exists |
+> | Retries | `VirtualService` | Gateway API retry support is still experimental |
+>
+> The rule of thumb: **use Gateway API when it covers your use case, fall back to Istio APIs for the gaps.** The waypoint proxy processes both — they work side by side.
+
