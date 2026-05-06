@@ -1,5 +1,68 @@
 # Service Mesh 3 Installation Guide
 
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph operators["Operators (OperatorHub)"]
+        OSSM3["Red Hat OpenShift<br/>Service Mesh 3"]
+        KialiOp["Kiali Operator"]
+        TempoOp["Tempo Operator"]
+        OTelOp["OpenTelemetry<br/>Operator"]
+        COO["Cluster Observability<br/>Operator"]
+    end
+
+    subgraph network["Network Configuration"]
+        OVN["OVN-Kubernetes CNI<br/><i>routingViaHost: true</i>"]
+        GWAPI["Kubernetes Gateway API"]
+    end
+
+    subgraph mesh["Istio Ambient Mesh"]
+        Istiod["Istiod<br/><i>istio-system</i>"]
+        IstioCNI["IstioCNI DaemonSet<br/><i>istio-cni</i>"]
+        ZTunnel["ZTunnel DaemonSet<br/><i>ztunnel</i>"]
+    end
+
+    subgraph observability["Observability"]
+        Prometheus["Prometheus<br/>User Workload Monitoring"]
+        Monitors["Service & Pod Monitors"]
+        Kiali["Kiali<br/><i>istio-system</i>"]
+        OSSMConsole["OSSM Console Plugin"]
+        Perses["Perses Dashboards"]
+        AccessLog["Envoy Access Logging"]
+    end
+
+    subgraph tracing["Distributed Tracing"]
+        Tempo["TempoStack<br/><i>tempostack</i>"]
+        OTel["OpenTelemetry Collector<br/><i>tempostack</i>"]
+        S3["ODF S3 Storage"]
+        TracingUI["Tracing UI Plugin"]
+        Telemetry["Istio Telemetry CR"]
+    end
+
+    OSSM3 -->|manages| Istiod
+    OSSM3 -->|manages| IstioCNI
+    OSSM3 -->|manages| ZTunnel
+    KialiOp -->|manages| Kiali
+    TempoOp -->|manages| Tempo
+    OTelOp -->|manages| OTel
+    COO -->|manages| Perses
+    COO -->|manages| OSSMConsole
+    COO -->|manages| TracingUI
+
+    ZTunnel -.->|requires| OVN
+    Istiod -.->|uses| GWAPI
+
+    Monitors -->|scrape metrics| Prometheus
+    Prometheus -->|provides data| Kiali
+    Prometheus -->|provides data| Perses
+
+    Telemetry -->|configures export| OTel
+    OTel -->|sends traces| Tempo
+    Tempo -->|stores in| S3
+    Tempo -->|provides data| TracingUI
+```
+
 ## Install the operators
 
 First go to the Operator Hub and install the operators in the OpenShift Console UI or via
