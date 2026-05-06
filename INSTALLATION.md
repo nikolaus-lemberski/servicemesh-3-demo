@@ -48,6 +48,14 @@ graph TD
     AccessLog ~~~ Telemetry
 ```
 
+## Install script
+
+You can follow this guide to get a good understanding of all the components involved and their configuration. If you want to focus more on using the mesh, you can set everything up via install script. Make sure you are logged in to your OpenShift cluster as an administrator and your OpenShift has **ODF** installed and configured.
+
+```bash
+./scripts/install.sh
+```
+
 ## Install the operators
 
 First go to the Operator Hub and install the operators in the OpenShift Console UI or via
