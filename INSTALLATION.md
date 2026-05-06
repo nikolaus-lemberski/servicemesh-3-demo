@@ -50,7 +50,10 @@ graph TD
 
 ## Install script
 
-You can follow this guide to get a good understanding of all the components involved and their configuration. If you want to focus more on using the mesh, you can set everything up via install script. Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured.
+You can follow this guide to get a good understanding of all the components involved and their configuration. If you want to focus on using the mesh, you can set everything up via install script. Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured.
+
+> [!TIP]
+> For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD.
 
 ```bash
 ./scripts/install.sh
