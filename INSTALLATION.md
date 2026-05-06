@@ -42,17 +42,10 @@ graph TD
         Tempo --> TracingUI["Tracing UI Plugin"]
     end
 
-    OSSM3 --> Istiod
-    OSSM3 --> IstioCNI
-    OSSM3 --> ZTunnel
-    Istiod -.-> GWAPI
-    ZTunnel -.-> OVN
-    KialiOp --> Kiali
-    TempoOp --> Tempo
-    OTelOp --> OTel
-    COO --> Perses
-    COO --> OSSMConsole
-    COO --> TracingUI
+    COO ~~~ OVN
+    GWAPI ~~~ IstioCNI
+    ZTunnel ~~~ Monitors
+    AccessLog ~~~ Telemetry
 ```
 
 ## Install the operators
