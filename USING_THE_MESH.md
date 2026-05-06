@@ -391,6 +391,8 @@ Observe -> Traces -> Tempo instance "tempostack" -> Tenant "dev"
 
 A canary release lets you roll out a new version of a service gradually, shifting traffic in controlled increments so you can observe behaviour before committing fully. We'll use the waypoint proxy and Gateway API `HTTPRoute` to steer traffic between service-c v1 and v2.
 
+![Canary release](/assets/img/canary_release.png)
+
 ### Preparation — version-specific Services
 
 The existing `service-c` Service selects **all** pods with `app: service-c` regardless of version. To split traffic we need two additional Services that each select a single version:
@@ -498,6 +500,8 @@ Traffic will return to normal round-robin across whichever service-c pods are ru
 ## Circuit Breaker
 
 A circuit breaker protects your system by detecting unhealthy endpoints and temporarily removing them from the load-balancing pool (outlier detection). Combined with retries, it ensures users never see errors from a single crashed instance.
+
+![Circuit breaker](/assets/img/circuit_breaker.png)
 
 We'll demonstrate this on service-c-v1 (already deployed) with 2 replicas. One pod will be "crashed" via its `/crash` endpoint while `/health` keeps returning UP — so Kubernetes still considers the pod ready, but the business endpoint returns 500.
 
