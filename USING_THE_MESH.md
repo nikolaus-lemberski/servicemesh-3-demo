@@ -465,6 +465,8 @@ Roughly 1 in 10 requests should now show `v2`. Check Kiali for a visual split:
 Service Mesh -> Traffic Graph -> Display -> Check "Traffic Distribution"
 ```
 
+![Kiali traffic distribution](/assets/img/10-canary-release.png)
+
 ### Step 4 — Shift 50 % of traffic to v2
 
 If v2 looks healthy, increase the canary to 50/50:
@@ -674,11 +676,7 @@ kill %1
 
 The counter should have jumped up by 10 — proving v2 received copies of the live traffic even though no user-facing response ever came from v2.
 
-In Kiali, you can observe the mirrored traffic flow as well:
-
-```text
-Service Mesh -> Traffic Graph -> Display -> Check "Traffic Distribution"
-```
+![Traffic mirroring](/assets/img/11-traffic-mirroring.png)
 
 ### Cleanup
 
@@ -694,6 +692,7 @@ oc delete -f k8s/istiofeatures/canary/0-service-c-versions.yml
 
 You have successfully explored Istio Service Mesh on OpenShift in ambient mode — from L4 security with the ztunnel all the way to L7 traffic management with waypoint proxies.
 
+> [!NOTE]
 > **Why do we mix Gateway API and Istio APIs?**
 >
 > You may have noticed that we used Gateway API `HTTPRoute` for canary releases and traffic mirroring, but Istio `DestinationRule` and `VirtualService` for the circuit breaker and retries. If you're familiar with sidecar-based Istio, you'd expect `VirtualService` + `DestinationRule` for everything.
