@@ -38,6 +38,7 @@ service-c has two versions (v1, v2) and crash/repair endpoints for resilience de
 ## Key Directories
 
 - `apps/` — microservice source code (service-a, service-b, service-c) with Containerfiles
+- `assets/img/` - images used in the instructions
 - `scripts/` — `install.sh` and `cleanup.sh` helper scripts
 - `k8s/istio/` — Istio, IstioCNI, ztunnel CRs (kustomize)
 - `k8s/apps/` — app deployments, service accounts, pod monitors, namespace, route (kustomize)

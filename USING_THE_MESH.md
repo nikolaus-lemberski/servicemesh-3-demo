@@ -97,6 +97,8 @@ At the moment, the apps are known to the mesh (because we have the label *istio-
 istioctl ztunnel-config workload -n ztunnel
 ```
 
+![Istioctl TCP](/assets/img/1-tcp.png)
+
 The apps in the *servicemesh-apps* namespace are listed, but there's no waypoint proxy and the protocol is **TCP** (should be **HBONE** in ambient mesh). We can label the namespace to add it to the mesh:
 
 ```bash
@@ -108,6 +110,8 @@ And checking the Ztunnel again, we can see that the protocol switched to **HBONE
 ```bash
 istioctl ztunnel-config workload -n ztunnel
 ```
+
+![Istioctl HBONE](/assets/img/2-hbone.png)
 
 If you check the Kiali Traffic Graph (Kiali console or integrated Kiali console in your OpenShift UI Console), you can see the service calls. As the Kiali traffic graph is built from real traffic, generate some with
 
@@ -129,6 +133,8 @@ Service Mesh -> Traffic Graph
 
 Select the servicemesh-apps namespace. You see a graph of the traffic that flows through our services. The blue lines mean all traffic is going through our L4 Ztunnel. If you activate *Security* in the *Display* menu and click on the new icons on the blue lines you see we have mTLS enabled.
 
+![Kiali](/assets/img/3-kiali.png)
+
 **Metrics**
 
 In the OpenShift console UI, open 
@@ -137,7 +143,9 @@ In the OpenShift console UI, open
 Observe -> Metrics
 ```
 
-Enter the query `istio_tcp_connections_opened_total` and you can see that with the Thanos Querier we can access Istio metrics. At the moment we only have L4 metrics. Later we'll use a Waypoint proxy for L7 which exposes HTTP metrics like `istio_requests_total`.
+Select the _servicemesh-apps_ namespace and enter the query `istio_tcp_connections_opened_total` and you can see that with the Thanos Querier we can access Istio metrics. At the moment we only have L4 metrics. Later we'll use a Waypoint proxy for L7 which exposes HTTP metrics like `istio_requests_total`.
+
+![Metrics](/assets/img/4-metrics.png)
 
 **Perses Dashboard**
 
@@ -147,7 +155,9 @@ In the OpenShift console UI, open
 Observe -> Perses Dashboards
 ```
 
-And you can see the TCP traffic.
+Explore the provided Dashboards like _Istio Ztunnel Dasboard_ or _Istio Service Dashboard_ and you can see the TCP traffic.
+
+![Perses Dashboard](/assets/img/5-perses.png)
 
 Also, if you go into 
 
@@ -155,7 +165,9 @@ Also, if you go into
 Workloads -> Deployments
 ```
 
-and open for example the service-b deployment, you will have a Service Mesh tab with inbound traffic, Kiali information etc..
+![Workloads Service Mesh tab](/assets/img/6-workload-deployment.png)
+
+and open for example the service-c-v1 deployment, you will have a Service Mesh tab with inbound traffic, Kiali information etc..
 
 ## L4 Security Features (Ztunnel)
 
@@ -304,7 +316,9 @@ Open Kiali
 echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
 ```
 
-And check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The traffic connection lines are blue, which means all traffic is going through the Ztunnel and we have Service Mesh functionality up to L4 of the network stack.
+And check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The **traffic connection lines are blue**, which means all traffic is going through the Ztunnel and we have Service Mesh functionality up to L4 of the network stack.
+
+![Kiali with Gateway](/assets/img/7-kiali-gateway.png)
 
 ### Waypoint Proxy
 
@@ -328,6 +342,12 @@ Label the namespace to enroll all services of the namespace to use the waypoint:
 oc label namespace servicemesh-apps istio.io/use-waypoint=waypoint
 ```
 
+You can verify the waypoint proxy via _istioctl_:
+
+```bash
+istioctl ztunnel-config svc -n ztunnel
+```
+
 As apps may use a persistent HTTP connection for downstream service calls, restart the deployments to make sure they will use the waypoint proxy.
 
 ```bash
@@ -349,7 +369,9 @@ Again, generate some traffic with
 while true; do curl $ROUTE; sleep 3; done
 ```
 
-In Kiali wait for the traffic data coming in and check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The traffic connection lines are changing to green, which means the traffic is going through the waypoint proxy and we have Service Mesh functionality up to L7 of the network stack.
+In Kiali wait for the traffic data coming in and check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The **traffic connection lines are changing to green**, which means the traffic is going through the waypoint proxy and we have Service Mesh functionality up to L7 of the network stack.
+
+![Kiali with Waypoint Proxy](/assets/img/8-kiali-waypoint-proxy.png)
 
 Also check the other observability dashboards we have already seen before. For example, the `istio_requests_total` query now has datapoints.
 
@@ -362,6 +384,8 @@ As our apps do that and our observability stack (Tempo with Distributed Tracing 
 ```text
 Observe -> Traces -> Tempo instance "tempostack" -> Tenant "dev"
 ```
+
+![Distributed Tracing](/assets/img/9-distributed-tracing.png)
 
 ## Canary Release
 
