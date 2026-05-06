@@ -3,64 +3,56 @@
 ## Architecture Overview
 
 ```mermaid
-graph TB
+graph TD
     subgraph operators["Operators (OperatorHub)"]
-        OSSM3["Red Hat OpenShift<br/>Service Mesh 3"]
-        KialiOp["Kiali Operator"]
-        TempoOp["Tempo Operator"]
-        OTelOp["OpenTelemetry<br/>Operator"]
-        COO["Cluster Observability<br/>Operator"]
+        direction LR
+        OSSM3["Service Mesh 3"]
+        KialiOp["Kiali"]
+        TempoOp["Tempo"]
+        OTelOp["OpenTelemetry"]
+        COO["Cluster Observability"]
     end
 
-    subgraph network["Network Configuration"]
-        OVN["OVN-Kubernetes CNI<br/><i>routingViaHost: true</i>"]
-        GWAPI["Kubernetes Gateway API"]
+    subgraph platform["Network"]
+        direction LR
+        OVN["OVN-Kubernetes CNI<br/>routingViaHost: true"]
+        GWAPI["Gateway API CRDs"]
     end
 
     subgraph mesh["Istio Ambient Mesh"]
-        Istiod["Istiod<br/><i>istio-system</i>"]
-        IstioCNI["IstioCNI DaemonSet<br/><i>istio-cni</i>"]
-        ZTunnel["ZTunnel DaemonSet<br/><i>ztunnel</i>"]
+        direction LR
+        Istiod["Istiod<br/>istio-system"]
+        IstioCNI["IstioCNI DaemonSet<br/>istio-cni"]
+        ZTunnel["ZTunnel DaemonSet<br/>ztunnel"]
     end
 
     subgraph observability["Observability"]
-        Prometheus["Prometheus<br/>User Workload Monitoring"]
-        Monitors["Service & Pod Monitors"]
-        Kiali["Kiali<br/><i>istio-system</i>"]
+        direction LR
+        Monitors["Service/Pod Monitors"] --> Prometheus["Prometheus UWM"]
+        Prometheus --> Kiali["Kiali"]
+        Prometheus --> Perses["Perses Dashboards"]
         OSSMConsole["OSSM Console Plugin"]
-        Perses["Perses Dashboards"]
-        AccessLog["Envoy Access Logging"]
+        AccessLog["Access Logging"]
     end
 
     subgraph tracing["Distributed Tracing"]
-        Tempo["TempoStack<br/><i>tempostack</i>"]
-        OTel["OpenTelemetry Collector<br/><i>tempostack</i>"]
-        S3["ODF S3 Storage"]
-        TracingUI["Tracing UI Plugin"]
-        Telemetry["Istio Telemetry CR"]
+        direction LR
+        Telemetry["Telemetry CR"] --> OTel["OTel Collector"] --> Tempo["TempoStack"]
+        Tempo --> S3["ODF S3 Storage"]
+        Tempo --> TracingUI["Tracing UI Plugin"]
     end
 
-    OSSM3 -->|manages| Istiod
-    OSSM3 -->|manages| IstioCNI
-    OSSM3 -->|manages| ZTunnel
-    KialiOp -->|manages| Kiali
-    TempoOp -->|manages| Tempo
-    OTelOp -->|manages| OTel
-    COO -->|manages| Perses
-    COO -->|manages| OSSMConsole
-    COO -->|manages| TracingUI
-
-    ZTunnel -.->|requires| OVN
-    Istiod -.->|uses| GWAPI
-
-    Monitors -->|scrape metrics| Prometheus
-    Prometheus -->|provides data| Kiali
-    Prometheus -->|provides data| Perses
-
-    Telemetry -->|configures export| OTel
-    OTel -->|sends traces| Tempo
-    Tempo -->|stores in| S3
-    Tempo -->|provides data| TracingUI
+    OSSM3 --> Istiod
+    OSSM3 --> IstioCNI
+    OSSM3 --> ZTunnel
+    Istiod -.-> GWAPI
+    ZTunnel -.-> OVN
+    KialiOp --> Kiali
+    TempoOp --> Tempo
+    OTelOp --> OTel
+    COO --> Perses
+    COO --> OSSMConsole
+    COO --> TracingUI
 ```
 
 ## Install the operators
