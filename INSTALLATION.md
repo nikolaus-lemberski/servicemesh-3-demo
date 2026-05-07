@@ -212,7 +212,9 @@ oc apply -f k8s/tracing/uiplugin.yml
 
 As a console plugin is installed you'll have to login again to your OpenShift console. In "Observe" is a new entry "Traces".
 
-Well done - move on to [Using the Mesh](USING_THE_MESH.md).
+## Congratulations, you're done!
+
+You've installed all operators and setup Service Mesh. Now move on to [Using the Mesh](USING_THE_MESH.md).
 
 ## MinIO instead of ODF
 
