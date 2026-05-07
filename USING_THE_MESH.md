@@ -1,6 +1,6 @@
 # Using the Service Mesh
 
-We're using the Service Mesh in ambient mode (L4), sidecar mode (L7) and ambient + waypoint proxies (L7).
+We're using the Service Mesh in ambient mode (L4) and with waypoint proxies (L7).
 
 - **Ztunnel**  
 Handles L4 (TCP) traffic management, primarily security. It provides connection-level load balancing, mTLS encryption (using HBONE), and L4 authorization. It does not read HTTP headers.

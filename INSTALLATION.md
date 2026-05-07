@@ -48,7 +48,7 @@ graph TD
     AccessLog ~~~ Telemetry
 ```
 
-## Install script
+## Install script shortcut
 
 You can follow this guide to get a good understanding of all the components involved and their configuration. If you want to focus on using the mesh, you can set everything up via install script. Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured.
 
@@ -210,6 +210,8 @@ oc apply -f k8s/tracing/uiplugin.yml
 ```
 
 As a console plugin is installed you'll have to login again to your OpenShift console. In "Observe" is a new entry "Traces".
+
+Well done - move on to [Using the Mesh](USING_THE_MESH.md).
 
 ## MinIO instead of ODF
 
