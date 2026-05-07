@@ -48,11 +48,12 @@ graph TD
     AccessLog ~~~ Telemetry
 ```
 
-## Install script shortcut
+## Install script (shortcut)
 
-You can follow this guide to get a good understanding of all the components involved and their configuration. If you want to focus on using the mesh, you can set everything up via install script. Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured.
+> [!WARNING]
+> Use only if you do not want to learn how to setup and configure the required Service Mesh infrastructure but want to focus on **using** the mesh. 
 
-If you do not have **ODF**, you can use Minio. Instructions at the end of the page.
+Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured. If you do not have **ODF**, you can use Minio. Instructions at the end of the page.
 
 > [!TIP]
 > For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD.
