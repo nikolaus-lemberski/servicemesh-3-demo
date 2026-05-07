@@ -52,6 +52,8 @@ graph TD
 
 You can follow this guide to get a good understanding of all the components involved and their configuration. If you want to focus on using the mesh, you can set everything up via install script. Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured.
 
+If you do not have **ODF**, you can use Minio. Instructions at the end of the page.
+
 > [!TIP]
 > For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD.
 
@@ -163,7 +165,7 @@ echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
 
 ### Tempostack
 
-Prerequisite: **ODF is installed** on OpenShift. If not, please install or use MinIO as alternative.
+Prerequisite: **ODF is installed** on OpenShift. If not, please install or use MinIO as alternative (see instructions for MinIO at the bottom).
 
 Create a bucket claim:
 
@@ -208,3 +210,23 @@ oc apply -f k8s/tracing/uiplugin.yml
 ```
 
 As a console plugin is installed you'll have to login again to your OpenShift console. In "Observe" is a new entry "Traces".
+
+## MinIO instead of ODF
+
+If you do not have ODF and don't want to install and configure it, you can use Minio as an alternative. This setup is **not for production use**!
+
+```bash
+oc create -f k8s/tracing/minio.yml
+```
+
+Check the Route for your MinIO installation and open the console route in your browser. Login with minioadmin / minioadmin, create a bucket and an API key. For simplicity reasons create a bucket "tempostorage" and an access key "tempostorage" with secret key "tempostorage". Again, do not do that for production workloads.
+
+Then set the environment variables
+
+```bash
+export S3_ENDPOINT="http://minio.minio.svc:9000"
+export AWS_ACCESS_KEY_ID="tempostorage"
+export AWS_SECRET_ACCESS_KEY="tempostorage"
+```
+
+...and continue with TempoStack (see section above).
