@@ -56,7 +56,7 @@ graph TD
 Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured. If you do not have **ODF**, you can use Minio. Instructions at the end of the page.
 
 > [!TIP]
-> For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD.
+> For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD and select OpenShift 4.21
 
 ```bash
 ./scripts/install.sh
