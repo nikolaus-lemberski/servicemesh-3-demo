@@ -53,10 +53,10 @@ graph TD
 > [!WARNING]
 > Use only if you do not want to learn how to setup and configure the required Service Mesh infrastructure but want to focus on **using** the mesh. 
 
-Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured. If you do not have **ODF**, you can use Minio. Instructions at the end of the page.
+Make sure you are logged in to your **OpenShift cluster** as an **administrator** and your OpenShift has **ODF** installed and configured. If you do not have **ODF**, you can use MinIO. Instructions at the end of the page.
 
 > [!TIP]
-> For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD and select OpenShift 4.21
+> For Red Hatters: use "Red Hat OpenShift Container Platform Cluster (Multi-Cloud)" from RHPD and select version 4.21, sno (single-node OpenShift) is sufficient.
 
 ```bash
 ./scripts/install.sh
