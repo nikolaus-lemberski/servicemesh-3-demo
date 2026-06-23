@@ -7,54 +7,6 @@ Handles L4 (TCP) traffic management, primarily security. It provides connection-
 - **Waypoint Proxy**  
 Handles L7 (HTTP/gRPC) traffic management. This is where the advanced, application-aware features are enabled.
 
-```mermaid
-graph TB
-    subgraph external["External Traffic"]
-        client["Client"]
-    end
-
-    subgraph cluster["Kubernetes Cluster"]
-        subgraph cp["Control Plane - istiod"]
-            istiod["istiod"]
-        end
-
-        subgraph ns["Namespace: servicemesh-apps"]
-            gw["Ingress Gateway"]
-
-            subgraph wp["Waypoint Proxy - Envoy L7"]
-                waypoint["waypoint"]
-            end
-
-            ztunnel["ztunnel - L4 mTLS HBONE"]
-            podA["Service A - Python"]
-            podB["Service B - TypeScript"]
-            podC1["Service C v1 - Quarkus"]
-            podC2["Service C v2 - Quarkus"]
-        end
-    end
-
-    client -->|HTTPS| gw
-    gw -->|HTTPRoute| waypoint
-
-    waypoint -->|HBONE mTLS| ztunnel
-    ztunnel -->|HBONE mTLS| waypoint
-
-    ztunnel --> podA
-    podA -->|call Service B| ztunnel
-
-    ztunnel --> podB
-    podB -->|call Service C| ztunnel
-
-    ztunnel --> podC1
-    ztunnel --> podC2
-
-    istiod -.->|xDS config| ztunnel
-    istiod -.->|xDS config| waypoint
-    istiod -.->|xDS config| gw
-```
-
-
-
 ## Install the apps
 
 Create the apps namespace, create a pod monitor (every namespace of the mesh needs a pod monitor) and the apps:
