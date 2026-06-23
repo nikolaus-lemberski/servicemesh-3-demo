@@ -14,57 +14,46 @@ graph TB
     end
 
     subgraph cluster["Kubernetes Cluster"]
-        subgraph cp["Control Plane (istiod)"]
-            istiod["istiod<br/><i>xDS config push</i>"]
+        subgraph cp["Control Plane - istiod"]
+            istiod["istiod"]
         end
 
         subgraph ns["Namespace: servicemesh-apps"]
-            gw["Ingress Gateway<br/><i>apps-gateway</i>"]
+            gw["Ingress Gateway"]
 
-            subgraph wp["Waypoint Proxy (Envoy L7)"]
-                waypoint["waypoint<br/><i>HTTP routing, retries,<br/>circuit breaking, AuthZ,<br/>metrics, tracing</i>"]
+            subgraph wp["Waypoint Proxy - Envoy L7"]
+                waypoint["waypoint"]
             end
 
-            ztunnel["ztunnel<br/><i>L4 · mTLS · HBONE</i>"]
-            podA["Service A<br/><i>Python</i>"]
-            podB["Service B<br/><i>TypeScript/Express</i>"]
-            podC1["Service C v1<br/><i>Java/Quarkus</i>"]
-            podC2["Service C v2<br/><i>Java/Quarkus</i>"]
+            ztunnel["ztunnel - L4 mTLS HBONE"]
+            podA["Service A - Python"]
+            podB["Service B - TypeScript"]
+            podC1["Service C v1 - Quarkus"]
+            podC2["Service C v2 - Quarkus"]
         end
     end
 
-    client -->|"HTTPS"| gw
-    gw -->|"HTTPRoute"| waypoint
+    client -->|HTTPS| gw
+    gw -->|HTTPRoute| waypoint
 
-    waypoint <-->|"HBONE (mTLS)"| ztunnel
+    waypoint -->|HBONE mTLS| ztunnel
+    ztunnel -->|HBONE mTLS| waypoint
 
     ztunnel --> podA
-    podA -->|"call Service B"| ztunnel
+    podA -->|call Service B| ztunnel
 
     ztunnel --> podB
-    podB -->|"call Service C"| ztunnel
+    podB -->|call Service C| ztunnel
 
     ztunnel --> podC1
     ztunnel --> podC2
 
-    istiod -.->|"xDS config"| ztunnel
-    istiod -.->|"xDS config"| waypoint
-    istiod -.->|"xDS config"| gw
-
-    classDef ztunnelStyle fill:#4a90d9,stroke:#2c5f8a,color:#fff
-    classDef waypointStyle fill:#e07b39,stroke:#b5612d,color:#fff
-    classDef podStyle fill:#50b86c,stroke:#3a8a50,color:#fff
-    classDef gwStyle fill:#9b59b6,stroke:#7d3c98,color:#fff
-    classDef cpStyle fill:#f0c040,stroke:#c9a030,color:#333
-    classDef clientStyle fill:#95a5a6,stroke:#7f8c8d,color:#fff
-
-    class ztunnel ztunnelStyle
-    class waypoint waypointStyle
-    class podA,podB,podC1,podC2 podStyle
-    class gw gwStyle
-    class istiod cpStyle
-    class client clientStyle
+    istiod -.->|xDS config| ztunnel
+    istiod -.->|xDS config| waypoint
+    istiod -.->|xDS config| gw
 ```
+
+
 
 ## Install the apps
 
@@ -97,7 +86,7 @@ At the moment, the apps are known to the mesh (because we have the label *istio-
 istioctl ztunnel-config workload -n ztunnel
 ```
 
-![Istioctl TCP](/assets/img/1-tcp.png)
+Istioctl TCP
 
 The apps in the *servicemesh-apps* namespace are listed, but there's no waypoint proxy and the protocol is **TCP** (should be **HBONE** in ambient mesh). We can label the namespace to add it to the mesh:
 
@@ -111,7 +100,7 @@ And checking the Ztunnel again, we can see that the protocol switched to **HBONE
 istioctl ztunnel-config workload -n ztunnel
 ```
 
-![Istioctl HBONE](/assets/img/2-hbone.png)
+Istioctl HBONE
 
 If you check the Kiali Traffic Graph (Kiali console or integrated Kiali console in your OpenShift UI Console), you can see the service calls. As the Kiali traffic graph is built from real traffic, generate some with
 
@@ -133,7 +122,7 @@ Service Mesh -> Traffic Graph
 
 Select the servicemesh-apps namespace. You see a graph of the traffic that flows through our services. The blue lines mean all traffic is going through our L4 Ztunnel. If you activate *Security* in the *Display* menu and click on the new icons on the blue lines you see we have mTLS enabled.
 
-![Kiali](/assets/img/3-kiali.png)
+Kiali
 
 **Metrics**
 
@@ -143,9 +132,9 @@ In the OpenShift console UI, open
 Observe -> Metrics
 ```
 
-Select the _servicemesh-apps_ namespace and enter the query `istio_tcp_connections_opened_total` and you can see that with the Thanos Querier we can access Istio metrics. At the moment we only have L4 metrics. Later we'll use a Waypoint proxy for L7 which exposes HTTP metrics like `istio_requests_total`.
+Select the *servicemesh-apps* namespace and enter the query `istio_tcp_connections_opened_total` and you can see that with the Thanos Querier we can access Istio metrics. At the moment we only have L4 metrics. Later we'll use a Waypoint proxy for L7 which exposes HTTP metrics like `istio_requests_total`.
 
-![Metrics](/assets/img/4-metrics.png)
+Metrics
 
 **Perses Dashboard**
 
@@ -155,9 +144,9 @@ In the OpenShift console UI, open
 Observe -> Perses Dashboards
 ```
 
-Explore the provided Dashboards like _Istio Ztunnel Dasboard_ or _Istio Service Dashboard_ and you can see the TCP traffic.
+Explore the provided Dashboards like *Istio Ztunnel Dasboard* or *Istio Service Dashboard* and you can see the TCP traffic.
 
-![Perses Dashboard](/assets/img/5-perses.png)
+Perses Dashboard
 
 Also, if you go into 
 
@@ -165,7 +154,7 @@ Also, if you go into
 Workloads -> Deployments
 ```
 
-![Workloads Service Mesh tab](/assets/img/6-workload-deployment.png)
+Workloads Service Mesh tab
 
 and open for example the service-c-v1 deployment, you will have a Service Mesh tab with inbound traffic, Kiali information etc..
 
@@ -318,7 +307,7 @@ echo "https://$(oc get route -n istio-system kiali -o jsonpath='{.spec.host}')"
 
 And check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The **traffic connection lines are blue**, which means all traffic is going through the Ztunnel and we have Service Mesh functionality up to L4 of the network stack.
 
-![Kiali with Gateway](/assets/img/7-kiali-gateway.png)
+Kiali with Gateway
 
 ### Waypoint Proxy
 
@@ -342,7 +331,7 @@ Label the namespace to enroll all services of the namespace to use the waypoint:
 oc label namespace servicemesh-apps istio.io/use-waypoint=waypoint
 ```
 
-You can verify the waypoint proxy via _istioctl_:
+You can verify the waypoint proxy via *istioctl*:
 
 ```bash
 istioctl ztunnel-config svc -n ztunnel
@@ -371,7 +360,7 @@ while true; do curl $ROUTE; sleep 3; done
 
 In Kiali wait for the traffic data coming in and check the *Traffic Graph* for the namespace *servicemesh-apps*. You can see that the traffic is routed from the Gateway through all services. The **traffic connection lines are changing to green**, which means the traffic is going through the waypoint proxy and we have Service Mesh functionality up to L7 of the network stack.
 
-![Kiali with Waypoint Proxy](/assets/img/8-kiali-waypoint-proxy.png)
+Kiali with Waypoint Proxy
 
 Also check the other observability dashboards we have already seen before. For example, the `istio_requests_total` query now has datapoints.
 
@@ -385,13 +374,13 @@ As our apps do that and our observability stack (Tempo with Distributed Tracing 
 Observe -> Traces -> Tempo instance "tempostack" -> Tenant "dev"
 ```
 
-![Distributed Tracing](/assets/img/9-distributed-tracing.png)
+Distributed Tracing
 
 ## Canary Release
 
 A canary release lets you roll out a new version of a service gradually, shifting traffic in controlled increments so you can observe behaviour before committing fully. We'll use the waypoint proxy and Gateway API `HTTPRoute` to steer traffic between service-c v1 and v2.
 
-![Canary release](/assets/img/canary_release.png)
+Canary release
 
 ### Preparation — version-specific Services
 
@@ -465,7 +454,7 @@ Roughly 1 in 10 requests should now show `v2`. Check Kiali for a visual split:
 Service Mesh -> Traffic Graph -> Display -> Check "Traffic Distribution"
 ```
 
-![Kiali traffic distribution](/assets/img/10-canary-release.png)
+Kiali traffic distribution
 
 ### Step 4 — Shift 50 % of traffic to v2
 
@@ -503,7 +492,7 @@ Traffic will return to normal round-robin across whichever service-c pods are ru
 
 A circuit breaker protects your system by detecting unhealthy endpoints and temporarily removing them from the load-balancing pool (outlier detection). Combined with retries, it ensures users never see errors from a single crashed instance.
 
-![Circuit breaker](/assets/img/circuit_breaker.png)
+Circuit breaker
 
 We'll demonstrate this on service-c-v1 (already deployed) with 2 replicas. One pod will be "crashed" via its `/crash` endpoint while `/health` keeps returning UP — so Kubernetes still considers the pod ready, but the business endpoint returns 500.
 
@@ -676,7 +665,7 @@ kill %1
 
 The counter should have jumped up by 10 — proving v2 received copies of the live traffic even though no user-facing response ever came from v2.
 
-![Traffic mirroring](/assets/img/11-traffic-mirroring.png)
+Traffic mirroring
 
 ### Cleanup
 
@@ -699,12 +688,14 @@ You have successfully explored Istio Service Mesh on OpenShift in ambient mode �
 >
 > In ambient mode, **Gateway API is the recommended API for traffic routing** and replaces `VirtualService` wherever it can:
 >
-> | Feature | API | Why |
-> |---|---|---|
-> | Weighted routing (canary) | `HTTPRoute` | Core Gateway API — `backendRefs` with `weight` |
-> | Traffic mirroring | `HTTPRoute` | Core Gateway API — `RequestMirror` filter |
-> | Circuit breaking / outlier detection | `DestinationRule` | No Gateway API equivalent exists |
-> | Retries | `VirtualService` | Gateway API retry support is still experimental |
+>
+> | Feature                              | API               | Why                                             |
+> | ------------------------------------ | ----------------- | ----------------------------------------------- |
+> | Weighted routing (canary)            | `HTTPRoute`       | Core Gateway API — `backendRefs` with `weight`  |
+> | Traffic mirroring                    | `HTTPRoute`       | Core Gateway API — `RequestMirror` filter       |
+> | Circuit breaking / outlier detection | `DestinationRule` | No Gateway API equivalent exists                |
+> | Retries                              | `VirtualService`  | Gateway API retry support is still experimental |
+>
 >
 > The rule of thumb: **use Gateway API when it covers your use case, fall back to Istio APIs for the gaps.** The waypoint proxy processes both — they work side by side.
 
